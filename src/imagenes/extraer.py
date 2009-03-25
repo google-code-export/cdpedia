@@ -128,7 +128,7 @@ def run(verbose):
         fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
         fh.next() # título
         for i,linea in enumerate(fh):
-            partes = linea.split(config.SEPARADOR_COLUMNAS)
+            partes = linea.split( config.SEPARADOR_COLUMNAS )
             arch, dir3 = partes[:2]
             if not arch.endswith(".html"):
                 continue

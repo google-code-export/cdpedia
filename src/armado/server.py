@@ -180,7 +180,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         res = []
         for link, titulo, ptje in candidatos:
             linea = FMT_BUSQ % (
-                            link.encode("utf8"), titulo.encode("utf8"), ptje)
+                            link.encode("utf8"), titulo.encode("utf8"), ptje.encode("utf8"))
             res.append(linea)
 
         pag = self.templates("searchres", results="\n".join(res))
@@ -213,7 +213,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         res = []
         for link, titulo, ptje in candidatos:
             linea = FMT_BUSQ % (
-                            link.encode("utf8"), titulo.encode("utf8"), ptje)
+                            link.encode("utf8"), titulo.encode("utf8"), ptje.encode("utf8"))
             res.append(linea)
 
         pag = self.templates("searchres", results="\n".join(res))

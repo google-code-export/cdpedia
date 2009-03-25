@@ -14,6 +14,5 @@ def run(verbose):
         print "Borramos las imágenes reducidas anteriores"
         shutil.rmtree(dst)
 
-    if os.path.exists(src):
-        print "Llevando imgs de %s a %s" % (src, dst)
-        shutil.copytree(src, dst)
+    print "Llevando imgs de %s a %s" % (src, dst)
+    shutil.copytree(src, dst)

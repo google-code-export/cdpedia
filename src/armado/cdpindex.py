@@ -9,7 +9,6 @@ para crear el índice.
 
 from __future__ import with_statement
 
-import cPickle
 import time
 import sys
 import os
@@ -21,6 +20,7 @@ import glob
 import config
 import subprocess
 import re
+import sqlite3
 
 usage = """Indice de títulos de la CDPedia
 
@@ -33,6 +33,9 @@ Para generar el archivo de indice hacer:
     max: cantidad máxima de títulos a indizar
     dirbase: de dónde dependen los archivos
 """
+
+BASETIT = "/cdpedia.db"
+BASEFTS = "/cdpedia_fts.db"
 
 # Buscamos todo hasta el último guión no inclusive, porque los
 # títulos son como "Zaraza - Wikipedia, la enciclopedia libre"
@@ -59,7 +62,7 @@ def _getHTMLTitle(arch):
 
 def _getPalabrasHTML(arch):
     arch = os.path.abspath(arch)
-    cmd = config.CMD_HTML_A_TEXTO % arch
+    cmd = "lynx -nolist -dump -display_charset=UTF-8 %s" % arch
     p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     txt = p.stdout.read()
     txt = txt.decode("utf8")
@@ -72,19 +75,10 @@ class Index(object):
     '''
 
     def __init__(self, filename, verbose=False):
-        wordsfilename = filename + ".words"
-        idsfilename = filename + ".ids"
-
-        if verbose:
-            print "Abriendo", wordsfilename
-        with open(wordsfilename, "rb") as fh:
-            self.word_shelf = cPickle.load(fh)
-
-        if verbose:
-            print "Abriendo", idsfilename
-        with open(idsfilename, "rb") as fh:
-            self.id_shelf = cPickle.load(fh)
-
+        self.db_titulos = sqlite3.connect( filename + BASETIT )
+        self.db_fts = sqlite3.connect( filename + BASEFTS )
+        self.db_titulos.execute('PRAGMA synchronous = OFF;')
+        self.db_fts.execute('PRAGMA synchronous = OFF;')
 
     def listar(self):
         '''Muestra en stdout las palabras y los artículos referenciados.'''
@@ -93,117 +87,62 @@ class Index(object):
             docids = [x[0] for x in docid_ptje] # le sacamos la cant
             print "%s: %s" % (palabra, [id_shelf[str(x)][1] for x in docids])
 
+    def search(self, keywords):
+        ret = []
+        cur = self.db_fts.cursor()
+        cur.execute("SELECT name, title FROM page WHERE page MATCH ?",
+                   (keywords,))
+        print "search '%s'" % keywords
+        for row in cur:
+            ret.append((row[0], row[1], "50"))
+        return ret
+    
+    def detailed_search(self, words):
+        ret= []
+        keywords = []
+        for word in words.split():
+          keywords.append(word + "*")
+          keywords.append('AND')
+        keywords.pop()
+        print "detailed search '%s'" % keywords
+        cur =  self.db_fts.cursor()
+        cur.execute("SELECT name, title FROM page WHERE page MATCH ?", (' '.join(keywords),))
+        for row in cur:
+          ret.append((row[0], row[1], "50"))
+        return ret
+
     def listado_valores(self):
-        '''Devuelve la info de todos los artículos.'''
-        return sorted(self.id_shelf.values())
+        ret = []
+        cur = self.db_titulos.cursor()
+        cur.execute("SELECT name, title FROM page", ())
+        for row in cur:
+            ret.append((row[0], row[1]))
+        return ret
 
     def listado_palabras(self):
-        '''Devuelve las palabras indexadas.'''
-        return sorted(self.word_shelf.keys())
+        return []
 
     def get_random(self):
-        '''Devuelve un artículo al azar.'''
-        return random.choice(self.id_shelf.values())
-
-    def _merge_results(self, results):
-        # vemos si tenemos algo más que vacio
-        results = filter(bool, results)
-        if not results:
-            return []
-
-        # el resultado final es la intersección de los parciales ("and")
-        intersectados = reduce(operator.iand, (set(d) for d in results))
-        final = {}
-        for result in results:
-            for pagtit, ptje in result.items():
-                if pagtit in intersectados:
-                    final[pagtit] = final.get(pagtit, 0) + ptje
-
-        final = [(pag, tit, ptje) for (pag, tit), ptje in final.items()]
-        return sorted(final, key=operator.itemgetter(2), reverse=True)
-
-
-    def search(self, words):
-        '''Busca palabras completas en el índice.'''
-        results = []
-        for word in PALABRAS.findall(normaliza(words)):
-            if word not in self.word_shelf:
-                continue
-
-            result = {}
-            for docid, ptje in self.word_shelf[word]:
-                pag = self.id_shelf[str(docid)]
-                result[pag] = result.get(pag, 0) + ptje
-            results.append(result)
-
-        return self._merge_results(results)
-
-    def detailed_search(self, words):
-        '''Busca palabras parciales en el índice.'''
-        results = []
-        for word in PALABRAS.findall(normaliza(words)):
-            # tomamos cuales palabras reales tienen adentro las palabra parcial
-            resultword = []
-            for guardada in self.word_shelf:
-                if word in guardada:
-                    resultword.append(guardada)
-            if not resultword:
-                continue
-
-            # efectivamente, tenemos algunas palabras reales
-            result = {}
-            for realword in resultword:
-                for docid, ptje in self.word_shelf[realword]:
-                    pagtit = self.id_shelf[str(docid)]
-                    result[pagtit] = result.get(pagtit, 0) + ptje
-            results.append(result)
-
-        return self._merge_results(results)
+        return random.choice(self.listado_valores())
 
     @classmethod
     def create(cls, filename, fuente, verbose):
-        '''Crea los índices.'''
-        id_shelf = {}
-        word_shelf = {}
-        wordsfilename = filename + ".words"
-        idsfilename = filename + ".ids"
-
-        # borramos lo viejo y arrancamos
-        for arch in (wordsfilename, idsfilename):
-            if os.path.exists(arch):
-                os.remove(arch)
-
-        # fill them
+        db_titulos = sqlite3.connect( filename + BASETIT )
+        db_titulos.execute('PRAGMA synchronous = OFF;')
+        db_titulos.execute("CREATE VIRTUAL TABLE page USING FTS3 (name ,title);")
+        db_fts = sqlite3.connect( filename + BASEFTS )
+        db_fts.execute( "PRAGMA synchronous = OFF;" )
+        db_fts.execute("CREATE VIRTUAL TABLE page USING FTS3 (name ,title,"
+                      "content);")
         for docid, (nomhtml, titulo, palabras_texto) in enumerate(fuente):
             if verbose:
-                print "Agregando al índice [%r]  (%r)" % (titulo, nomhtml)
-            # docid -> info final
-            id_shelf[str(docid)] = (nomhtml, titulo)
+                print "Agregando a la base [%r]  (%r)" % (titulo, nomhtml)
+            db_titulos.execute("INSERT INTO page VALUES (?,?)",(nomhtml, titulo))
+            db_fts.execute("INSERT INTO page VALUES (?,?,?)", ( nomhtml, titulo,
+                          palabras_texto ))
 
-            # palabras -> docid
-            # a las palabras del título le damos mucha importancia: 50
-            for pal in PALABRAS.findall(normaliza(titulo)):
-                word_shelf.setdefault(pal, []).append((docid, 50))
-
-            # las palabras del texto importan tanto como las veces que están
-            all_words = {}
-            for pal in PALABRAS.findall(normaliza(palabras_texto)):
-                all_words[pal] = all_words.get(pal, 0) + 1
-
-            for pal, cant in all_words.items():
-                word_shelf.setdefault(pal, []).append((docid, cant))
-
-        # grabamos
-        if verbose:
-            print "Grabando", wordsfilename
-        with open(wordsfilename, "wb") as fh:
-            cPickle.dump(word_shelf, fh, 2)
-
-        if verbose:
-            print "Grabando", idsfilename
-        with open(idsfilename, "wb") as fh:
-            cPickle.dump(id_shelf, fh, 2)
-
+        db_titulos.commit()
+        db_fts.commit()
         return docid
 
 # Lo dejamos comentado para despues, para hacer el full_text desde los bloques
@@ -245,7 +184,7 @@ class Index(object):
 #     cant = Index.create(salida, gen(), verbose)
 #     return cant
 
-def generar_de_html(dirbase, verbose):
+def generar_de_html(dirbase, verbose, full_text=True):
     # lo importamos acá porque no es necesario en producción
     from src import utiles
 
@@ -266,7 +205,10 @@ def generar_de_html(dirbase, verbose):
             nomreal = os.path.join(dirbase, nomhtml)
             if os.access(nomreal, os.F_OK):
                 titulo = _getHTMLTitle(nomreal)
-                palabras = u""
+                if full_text:
+                  palabras = _getPalabrasHTML(nomreal)
+                else:
+                  palabras = u""
             else:
                 titulo = ""
                 print "WARNING: Archivo no encontrado:", nomreal

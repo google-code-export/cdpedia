@@ -66,8 +66,9 @@ def copiarIndices():
     # las fuentes
     dest_src = path.join(config.DIR_CDBASE, "indice")
     dir_a_cero(dest_src)
-    for name in glob.glob("%s.*" % config.PREFIJO_INDICE):
-        shutil.copy(name, dest_src)
+    for name in glob.glob("%s*" % config.PREFIJO_INDICE):
+        print name, dest_src
+        shutil.copytree(name, os.path.join(dest_src, os.path.split(name)[1]))
 
 def armarEjecutable():
     pass
@@ -101,11 +102,11 @@ def preparaTemporal():
         os.makedirs(dtemp)
 
 
-def main(src_info, evitar_iso, verbose, desconectado, preprocesado):
+def main(src_info, evitar_iso, verbose, desconectado, preprocesado, generar_bloques):
 
     articulos = path.join(src_info, "articles")
 
-    if not preprocesado:
+    if not preprocesado and not generar_bloques:
         mensaje("Comenzando!")
         preparaTemporal()
 
@@ -124,6 +125,14 @@ def main(src_info, evitar_iso, verbose, desconectado, preprocesado):
         result = extraer.run(verbose)
         print '  total: %d imágenes sacadas de %d archivos' % result
 
+        mensaje("Borrando las bases anteriores")
+        for f in glob.glob(config.PREFIJO_INDICE + "/*"):
+          os.remove(f)
+        try:
+          os.mkdir( config.PREFIJO_INDICE )
+        except :
+          print "Ya está creado el directorio bases"
+
     if not desconectado:
         mensaje("Descargando las imágenes de la red")
         download.traer(verbose)
@@ -131,10 +140,10 @@ def main(src_info, evitar_iso, verbose, desconectado, preprocesado):
     # de acá para adelante es posterior al pre-procesado
     mensaje("Reduciendo las imágenes descargadas")
     reducir.run(verbose)
-
-    mensaje("Generando el índice")
-    result = cdpindex.generar_de_html(articulos, verbose)
-    print '  total: %d archivos' % result
+    if not generar_bloques:
+      mensaje("Generando el índice")
+      result = cdpindex.generar_de_html(articulos, verbose)
+      print '  total: %d archivos' % result
 
     mensaje("Generando los bloques")
     result = compresor.generar(verbose)
@@ -173,10 +182,13 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", action="store_true",
                   dest="verbose", help="muestra info de lo que va haciendo")
     parser.add_option("-d", "--desconectado", action="store_true",
-                  dest="desconectado", help="trabaja desconectado de la red")
+                  dest="desconectado", help="muestra info de lo que va haciendo")
     parser.add_option("-p", "--preprocesado", action="store_true",
                   dest="preprocesado",
                   help="arranca el laburo con lo preprocesado de antes")
+    parser.add_option("-b", "--gen-bloques", action="store_true",
+                  dest="generar_bloques",
+                  help="arranca desde la generación de bloques")
 
     (options, args) = parser.parse_args()
 
@@ -190,5 +202,6 @@ if __name__ == "__main__":
     verbose = bool(options.verbose)
     desconectado = bool(options.desconectado)
     preprocesado = bool(options.preprocesado)
+    generar_bloques = bool(options.generar_bloques)
 
-    main(args[0], options.create_iso, verbose, desconectado, preprocesado)
+    main(args[0], options.create_iso, verbose, desconectado, preprocesado, generar_bloques)
