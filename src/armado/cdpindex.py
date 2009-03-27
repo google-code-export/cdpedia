@@ -21,6 +21,11 @@ import glob
 import config
 import subprocess
 import re
+import shutil
+
+from whoosh import store, index
+from whoosh.fields import Schema, STORED, ID, KEYWORD, TEXT
+from whoosh.qparser import QueryParser, MultifieldParser
 
 usage = """Indice de títulos de la CDPedia
 
@@ -49,7 +54,7 @@ def normaliza(txt):
 def _getHTMLTitle(arch):
     # Todavia no soportamos redirect, asi que todos los archivos son
     # válidos y debería tener TITLE en ellos
-    html = codecs.open(arch, "r", "utf8").read()
+    html = open(arch, "r").read()
     m = SACATIT.match(html)
     if m:
         tit = m.groups()[0]
@@ -72,19 +77,13 @@ class Index(object):
     '''
 
     def __init__(self, filename, verbose=False):
-        wordsfilename = filename + ".words"
-        idsfilename = filename + ".ids"
-
         if verbose:
-            print "Abriendo", wordsfilename
-        with open(wordsfilename, "rb") as fh:
-            self.word_shelf = cPickle.load(fh)
-
-        if verbose:
-            print "Abriendo", idsfilename
-        with open(idsfilename, "rb") as fh:
-            self.id_shelf = cPickle.load(fh)
-
+            print "Abriendo el índice"
+        filename + ".whoosh"
+        storage = store.FileStorage(filename)
+        schema = Schema(titulo=TEXT(stored=True), contenido=TEXT(stored=False),
+                        nomhtml=ID(stored=True), docid=ID)
+        self.index = index.Index(storage, schema=schema)
 
     def listar(self):
         '''Muestra en stdout las palabras y los artículos referenciados.'''
@@ -125,156 +124,85 @@ class Index(object):
 
     def search(self, words):
         '''Busca palabras completas en el índice.'''
-        results = []
-        for word in PALABRAS.findall(normaliza(words)):
-            if word not in self.word_shelf:
-                continue
-
-            result = {}
-            for docid, ptje in self.word_shelf[word]:
-                pag = self.id_shelf[str(docid)]
-                result[pag] = result.get(pag, 0) + ptje
-            results.append(result)
-
-        return self._merge_results(results)
+        searcher = self.index.searcher()
+        fields = ["contenido", "titulo"]
+        parser = MultifieldParser(fields, schema = self.index.schema)
+        query = parser.parse(words)
+        results = searcher.search(query)
+        return results
 
     def detailed_search(self, words):
         '''Busca palabras parciales en el índice.'''
-        results = []
-        for word in PALABRAS.findall(normaliza(words)):
-            # tomamos cuales palabras reales tienen adentro las palabra parcial
-            resultword = []
-            for guardada in self.word_shelf:
-                if word in guardada:
-                    resultword.append(guardada)
-            if not resultword:
-                continue
-
-            # efectivamente, tenemos algunas palabras reales
-            result = {}
-            for realword in resultword:
-                for docid, ptje in self.word_shelf[realword]:
-                    pagtit = self.id_shelf[str(docid)]
-                    result[pagtit] = result.get(pagtit, 0) + ptje
-            results.append(result)
-
-        return self._merge_results(results)
+        searcher = self.index.searcher()
+        fields = ["contenido", "titulo"]
+        parser = MultifieldParser(fields, schema = self.index.schema)
+        detailed = []
+        for field in fields:
+            for word in words.split():
+                detailed.append(parser.make_wildcard(field, "*"+word+"*"))
+        query = parser.make_or(detailed)
+        print query
+        results = searcher.search(query)
+        return results
 
     @classmethod
     def create(cls, filename, fuente, verbose):
         '''Crea los índices.'''
-        id_shelf = {}
-        word_shelf = {}
-        wordsfilename = filename + ".words"
-        idsfilename = filename + ".ids"
+        arch = filename + ".whoosh"
+        if os.path.exists(arch):
+            shutil.rmtree(arch)
+        os.makedirs(arch)
 
-        # borramos lo viejo y arrancamos
-        for arch in (wordsfilename, idsfilename):
-            if os.path.exists(arch):
-                os.remove(arch)
+        storage = store.FileStorage(arch)
+        schema = Schema(titulo=TEXT(stored=True), contenido=TEXT(stored=False),
+                        nomhtml=ID(stored=True), docid=ID)
+        # creamos el indice
+        ix = index.Index(storage, schema=schema, create=True)
 
+        writer = ix.writer()
         # fill them
         for docid, (nomhtml, titulo, palabras_texto) in enumerate(fuente):
             if verbose:
                 print "Agregando al índice [%r]  (%r)" % (titulo, nomhtml)
-            # docid -> info final
-            id_shelf[str(docid)] = (nomhtml, titulo)
-
-            # palabras -> docid
-            # a las palabras del título le damos mucha importancia: 50
-            for pal in PALABRAS.findall(normaliza(titulo)):
-                word_shelf.setdefault(pal, []).append((docid, 50))
-
-            # las palabras del texto importan tanto como las veces que están
-            all_words = {}
-            for pal in PALABRAS.findall(normaliza(palabras_texto)):
-                all_words[pal] = all_words.get(pal, 0) + 1
-
-            for pal, cant in all_words.items():
-                word_shelf.setdefault(pal, []).append((docid, cant))
-
+            writer.add_document(titulo=titulo.decode('utf-8'), docid=unicode(docid), nomhtml=unicode(nomhtml), contenido=palabras_texto)
         # grabamos
-        if verbose:
-            print "Grabando", wordsfilename
-        with open(wordsfilename, "wb") as fh:
-            cPickle.dump(word_shelf, fh, 2)
-
-        if verbose:
-            print "Grabando", idsfilename
-        with open(idsfilename, "wb") as fh:
-            cPickle.dump(id_shelf, fh, 2)
-
+        writer.commit()
         return docid
 
-# Lo dejamos comentado para despues, para hacer el full_text desde los bloques
-#
-# def generar(src_info, verbose, full_text=False):
-#     return _create_index(config.LOG_PREPROCESADO, config.PREFIJO_INDICE,
-#                         dirbase=src_info, verbose=verbose, full_text=full_text)
-#
-#     def gen():
-#         fh = codecs.open(fuente, "r", "utf8")
-#         fh.next() # título
-#         for i,linea in enumerate(fh):
-#             partes = linea.split()
-#             arch, dir3 = partes[:2]
-#             if not arch.endswith(".html"):
-#                 continue
-#
-#             (categoria, restonom) = utiles.separaNombre(arch)
-#             if verbose:
-#                 print "Indizando [%d] %s" % (i, arch.encode("utf8"))
-#             # info auxiliar
-#             nomhtml = os.path.join(dir3, arch)
-#             nomreal = os.path.join(dirbase, nomhtml)
-#             if os.access(nomreal, os.F_OK):
-#                 titulo = _getHTMLTitle(nomreal)
-#                 if full_text:
-#                     palabras = _getPalabrasHTML(nomreal)
-#                 else:
-#                     palabras = []
-#             else:
-#                 titulo = ""
-#                 print "WARNING: Archivo no encontrado:", nomreal
-#
-#             # si tenemos max, lo respetamos y entregamos la info
-#             if max is not None and i > max:
-#                 raise StopIteration
-#             yield (nomhtml, titulo, palabras)
-#
-#     cant = Index.create(salida, gen(), verbose)
-#     return cant
 
-def generar_de_html(dirbase, verbose):
+def generar_de_html(dirbase, verbose, full_text=True):
     # lo importamos acá porque no es necesario en producción
     from src import utiles
 
     def gen():
-        fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
-        fh.next() # título
-        for i,linea in enumerate(fh):
-            partes = linea.split()
-            arch, dir3 = partes[:2]
-            if not arch.endswith(".html"):
-                continue
+         fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
+         fh.next() # título
+         for i,linea in enumerate(fh):
+             partes = linea.split()
+             arch, dir3 = partes[:2]
+             if not arch.endswith(".html"):
+                 continue
 
-            (categoria, restonom) = utiles.separaNombre(arch)
-            if verbose:
-                print "Indizando [%d] %s" % (i, arch.encode("utf8"))
-            # info auxiliar
-            nomhtml = os.path.join(dir3, arch)
-            nomreal = os.path.join(dirbase, nomhtml)
-            if os.access(nomreal, os.F_OK):
-                titulo = _getHTMLTitle(nomreal)
-                palabras = u""
-            else:
-                titulo = ""
-                print "WARNING: Archivo no encontrado:", nomreal
+             (categoria, restonom) = utiles.separaNombre(arch)
+             if verbose:
+                 print "Indizando [%d] %s" % (i, arch.encode("utf8"))
+             # info auxiliar
+             nomhtml = os.path.join(dir3, arch)
+             nomreal = os.path.join(dirbase, nomhtml)
+             if os.access(nomreal, os.F_OK):
+                 titulo = _getHTMLTitle(nomreal)
+                 if full_text:
+                     palabras = _getPalabrasHTML(nomreal)
+                 else:
+                     palabras = []
+             else:
+                 titulo = ""
+                 print "WARNING: Archivo no encontrado:", nomreal
 
-            # si tenemos max, lo respetamos y entregamos la info
-            if max is not None and i > max:
-                raise StopIteration
-            yield (nomhtml, titulo, palabras)
+             # si tenemos max, lo respetamos y entregamos la info
+             if max is not None and i > max:
+                 raise StopIteration
+             yield (nomhtml, titulo, palabras)
 
     cant = Index.create(config.PREFIJO_INDICE, gen(), verbose)
     return cant

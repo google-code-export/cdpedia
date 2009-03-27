@@ -24,7 +24,8 @@ __version__ = "0.1.1.1.1.1"
 reg = re.compile("\<title\>([^\<]*)\</title\>")
 reHeader1 = re.compile('\<h1 class="firstHeading"\>([^\<]*)\</h1\>')
 
-FMT_BUSQ = '<tr><td><a href="%s">%s</a><small><i>  (%s)</small></i></td></tr> '
+#FMT_BUSQ = '<tr><td><a href="%s">%s</a><small><i>  (%s)</small></i></td></tr> '
+FMT_BUSQ = '<tr><td><a href="%s">%s</a></td></tr> '
 
 class ContentNotFound(Exception):
     """No se encontró la página requerida!"""
@@ -173,14 +174,14 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if not "keywords" in params:
             return self._main_page(u"¡Búsqueda mal armada!")
         keywords = params["keywords"][0]
-
-        candidatos = self.index.detailed_search(keywords.decode("utf8"))
-        if not candidatos:
+        results = self.index.detailed_search(keywords.decode("utf8"))
+        if not results:
             return self._main_page(u"No se encontró nada para lo ingresado!")
         res = []
-        for link, titulo, ptje in candidatos:
-            linea = FMT_BUSQ % (
-                            link.encode("utf8"), titulo.encode("utf8"), ptje)
+
+        for doc in results:
+            linea = FMT_BUSQ % (doc['nomhtml'].encode("utf8"),
+                                doc['titulo'].encode('utf-8'))
             res.append(linea)
 
         pag = self.templates("searchres", results="\n".join(res))
@@ -206,14 +207,14 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if not "keywords" in params:
             return self._main_page(u"¡Búsqueda mal armada!")
         keywords = params["keywords"][0]
-        candidatos = self.index.search(keywords.decode("utf8"))
-        if not candidatos:
+        results = self.index.search(keywords.decode("utf8"))
+        if not results:
             return self._main_page(u"No se encontró nada para lo ingresado!")
-        print "==== cand", candidatos
+        print "==== resultados:", results
         res = []
-        for link, titulo, ptje in candidatos:
-            linea = FMT_BUSQ % (
-                            link.encode("utf8"), titulo.encode("utf8"), ptje)
+        for doc in results:
+            linea = FMT_BUSQ % (doc['nomhtml'].encode("utf8"),
+                                doc['titulo'].encode('utf-8'))
             res.append(linea)
 
         pag = self.templates("searchres", results="\n".join(res))
@@ -227,7 +228,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 def run(event):
-    WikiHTTPRequestHandler.index = cdpindex.Index(config.PREFIJO_INDICE)
+    WikiHTTPRequestHandler.index = cdpindex.Index(config.PREFIJO_INDICE+'.whoosh')
     WikiHTTPRequestHandler.protocol_version = "HTTP/1.0"
     httpd = BaseHTTPServer.HTTPServer(('', 8000), WikiHTTPRequestHandler)
 

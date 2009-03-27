@@ -65,9 +65,10 @@ def copiarIndices():
     """Copiar los indices."""
     # las fuentes
     dest_src = path.join(config.DIR_CDBASE, "indice")
-    dir_a_cero(dest_src)
+    if os.path.exists(dest_src):
+        shutil.rmtree(dest_src)
     for name in glob.glob("%s.*" % config.PREFIJO_INDICE):
-        shutil.copy(name, dest_src)
+        shutil.copytree(name, dest_src)
 
 def armarEjecutable():
     pass
