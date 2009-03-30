@@ -13,7 +13,7 @@ DIR_BLOQUES = "temp/cdroot/bloques"
 DIR_TEMP = "temp"
 
 # Los índices generados (a esto se le agrega las dos terminaciones)
-PREFIJO_INDICE = "temp/wikiindex"
+PREFIJO_INDICE = "temp/wikiindex.whoosh"
 
 # Directorio destino de los archivos preprocesados.
 # Puede ser relativo o absoluto
