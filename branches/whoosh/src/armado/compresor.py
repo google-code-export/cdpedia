@@ -18,6 +18,7 @@ Formato del bloque:
 from __future__ import division
 
 import os
+import re
 import codecs
 import struct
 import cPickle as pickle
@@ -163,7 +164,7 @@ def generar(verbose):
     # armo el diccionario de redirects
     redirects = {}
     for linea in codecs.open(config.LOG_REDIRECTS, "r", "utf-8"):
-        desde, hasta = linea.split()
+        desde, hasta = re.match('(.*html)\s+(.*html)', linea).groups()
         desde = path.basename(desde)
         hasta = path.basename(hasta)
         if verbose:
