@@ -23,9 +23,10 @@ import subprocess
 import re
 import shutil
 
-from whoosh import store, index
+from whoosh import store, index, writing, query
 from whoosh.fields import Schema, STORED, ID, KEYWORD, TEXT
 from whoosh.qparser import QueryParser, MultifieldParser
+from whoosh.analysis import StandardAnalyzer
 
 usage = """Indice de títulos de la CDPedia
 
@@ -38,6 +39,11 @@ Para generar el archivo de indice hacer:
     max: cantidad máxima de títulos a indizar
     dirbase: de dónde dependen los archivos
 """
+
+
+STOP_WORDS = frozenset(("de", "a", "y", "es", "en", "este",
+                        "vos", "para", "ser", "o", "si", "puede", "son"
+                        "eso", "con", "como", "desde", "un", "no"))
 
 # Buscamos todo hasta el último guión no inclusive, porque los
 # títulos son como "Zaraza - Wikipedia, la enciclopedia libre"
@@ -81,8 +87,7 @@ class Index(object):
             print "Abriendo el índice"
         filename + ".whoosh"
         storage = store.FileStorage(filename)
-        schema = Schema(titulo=TEXT(stored=True), contenido=TEXT(stored=False),
-                        nomhtml=ID(stored=True), docid=ID)
+        schema = Index.get_schema()
         self.index = index.Index(storage, schema=schema)
 
     def listar(self):
@@ -146,66 +151,74 @@ class Index(object):
         return results
 
     @classmethod
-    def create(cls, filename, fuente, verbose):
+    def get_schema(cls):
+        """ crea el Schema de whoosh. """
+        analyzer = StandardAnalyzer(stoplist = STOP_WORDS)
+        schema = Schema(titulo=TEXT(analyzer=analyzer, stored=True),
+                        contenido=TEXT(analyzer=analyzer, stored=False),
+                        nomhtml=STORED)
+        return schema
+
+    @classmethod
+    def create(cls, filename, fuente,  verbose):
         '''Crea los índices.'''
-        arch = filename + ".whoosh"
-        if os.path.exists(arch):
-            shutil.rmtree(arch)
-        os.makedirs(arch)
-
+        arch = filename
         storage = store.FileStorage(arch)
-        schema = Schema(titulo=TEXT(stored=True), contenido=TEXT(stored=False),
-                        nomhtml=ID(stored=True), docid=ID)
         # creamos el indice
-        ix = index.Index(storage, schema=schema, create=True)
+        ix = index.Index(storage, schema=cls.get_schema(), create=True)
 
-        writer = ix.writer()
         # fill them
-        for docid, (nomhtml, titulo, palabras_texto) in enumerate(fuente):
-            if verbose:
-                print "Agregando al índice [%r]  (%r)" % (titulo, nomhtml)
-            writer.add_document(titulo=titulo.decode('utf-8'), docid=unicode(docid), nomhtml=unicode(nomhtml), contenido=palabras_texto)
-        # grabamos
-        writer.commit()
-        return docid
+        with ix.writer() as writer:
+            for nomhtml, titulo, palabras_texto in fuente:
+                if verbose:
+                    print "Agregando al índice [%r]  (%r)" % (titulo, nomhtml)
+                writer.add_document(titulo=titulo.decode('utf-8'),
+                                    nomhtml=unicode(nomhtml),
+                                    contenido=palabras_texto)
+        ix.optimize()
+        return ix.doc_count()
 
 
-def generar_de_html(dirbase, verbose, full_text=True):
+def generar_de_html(dirbase, verbose, full_text):
     # lo importamos acá porque no es necesario en producción
     from src import utiles
 
     def gen():
-         fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
-         fh.next() # título
-         for i,linea in enumerate(fh):
-             partes = linea.split()
-             arch, dir3 = partes[:2]
-             if not arch.endswith(".html"):
-                 continue
+        fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
+        fh.next() # título
+        for i,linea in enumerate(fh):
+            partes = linea.split()
+            arch, dir3 = partes[:2]
+            if not arch.endswith(".html"):
+                continue
 
-             (categoria, restonom) = utiles.separaNombre(arch)
-             if verbose:
-                 print "Indizando [%d] %s" % (i, arch.encode("utf8"))
-             # info auxiliar
-             nomhtml = os.path.join(dir3, arch)
-             nomreal = os.path.join(dirbase, nomhtml)
-             if os.access(nomreal, os.F_OK):
-                 titulo = _getHTMLTitle(nomreal)
-                 if full_text:
-                     palabras = _getPalabrasHTML(nomreal)
-                 else:
-                     palabras = []
-             else:
-                 titulo = ""
-                 print "WARNING: Archivo no encontrado:", nomreal
+            (categoria, restonom) = utiles.separaNombre(arch)
+            if verbose:
+                print "Indizando [%d] %s" % (i, arch.encode("utf8"))
+            # info auxiliar
+            nomhtml = os.path.join(dir3, arch)
+            nomreal = os.path.join(dirbase, nomhtml)
+            if os.access(nomreal, os.F_OK):
+                titulo = _getHTMLTitle(nomreal)
+                if full_text:
+                    palabras = _getPalabrasHTML(nomreal)
+                else:
+                    palabras = []
+            else:
+                titulo = ""
+                print "WARNING: Archivo no encontrado:", nomreal
+            # si tenemos max, lo respetamos y entregamos la info
+            if max is not None and i > max:
+                raise StopIteration
+            yield (nomhtml, titulo, palabras)
 
-             # si tenemos max, lo respetamos y entregamos la info
-             if max is not None and i > max:
-                 raise StopIteration
-             yield (nomhtml, titulo, palabras)
-
-    cant = Index.create(config.PREFIJO_INDICE, gen(), verbose)
+    filename = config.PREFIJO_INDICE
+    if os.path.exists(filename):
+        shutil.rmtree(filename)
+    os.makedirs(filename)
+    cant = Index.create(filename, gen(), verbose)
     return cant
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

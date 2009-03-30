@@ -24,7 +24,6 @@ __version__ = "0.1.1.1.1.1"
 reg = re.compile("\<title\>([^\<]*)\</title\>")
 reHeader1 = re.compile('\<h1 class="firstHeading"\>([^\<]*)\</h1\>')
 
-#FMT_BUSQ = '<tr><td><a href="%s">%s</a><small><i>  (%s)</small></i></td></tr> '
 FMT_BUSQ = '<tr><td><a href="%s">%s</a></td></tr> '
 
 class ContentNotFound(Exception):
@@ -228,7 +227,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 def run(event):
-    WikiHTTPRequestHandler.index = cdpindex.Index(config.PREFIJO_INDICE+'.whoosh')
+    WikiHTTPRequestHandler.index = cdpindex.Index(config.PREFIJO_INDICE)
     WikiHTTPRequestHandler.protocol_version = "HTTP/1.0"
     httpd = BaseHTTPServer.HTTPServer(('', 8000), WikiHTTPRequestHandler)
 

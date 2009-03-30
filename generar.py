@@ -102,7 +102,8 @@ def preparaTemporal():
         os.makedirs(dtemp)
 
 
-def main(src_info, evitar_iso, verbose, desconectado, preprocesado):
+def main(src_info, evitar_iso, verbose, desconectado, preprocesado,
+         full_text):
 
     articulos = path.join(src_info, "articles")
 
@@ -134,8 +135,8 @@ def main(src_info, evitar_iso, verbose, desconectado, preprocesado):
     reducir.run(verbose)
 
     mensaje("Generando el índice")
-    result = cdpindex.generar_de_html(articulos, verbose)
-    print '  total: %d archivos' % result
+    doc_count = cdpindex.generar_de_html(articulos, verbose, full_text)
+    print '  total: %d documentos' % doc_count
 
     mensaje("Generando los bloques")
     result = compresor.generar(verbose)
@@ -178,6 +179,9 @@ if __name__ == "__main__":
     parser.add_option("-p", "--preprocesado", action="store_true",
                   dest="preprocesado",
                   help="arranca el laburo con lo preprocesado de antes")
+    parser.add_option("-f", "--full-text", action="store_true",
+                  dest="full_text",
+                  help="Genera el índice del texto completo".decode('utf-8'))
 
     (options, args) = parser.parse_args()
 
@@ -191,5 +195,7 @@ if __name__ == "__main__":
     verbose = bool(options.verbose)
     desconectado = bool(options.desconectado)
     preprocesado = bool(options.preprocesado)
+    full_text = bool(options.full_text)
 
-    main(args[0], options.create_iso, verbose, desconectado, preprocesado)
+    main(args[0], options.create_iso, verbose, desconectado, preprocesado,
+         full_text)
