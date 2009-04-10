@@ -23,9 +23,9 @@ import subprocess
 import re
 import shutil
 
-from whoosh import store, index, writing, query
+from whoosh import store, index, tables
 from whoosh.fields import Schema, STORED, ID, KEYWORD, TEXT
-from whoosh.qparser import QueryParser, MultifieldParser
+from whoosh.qparser import MultifieldParser
 from whoosh.analysis import StandardAnalyzer
 
 usage = """Indice de títulos de la CDPedia
@@ -86,7 +86,7 @@ class Index(object):
         if verbose:
             print "Abriendo el índice"
         filename + ".whoosh"
-        storage = store.FileStorage(filename)
+        storage = FileStorage(filename)
         schema = Index.get_schema()
         self.index = index.Index(storage, schema=schema)
 
@@ -146,7 +146,6 @@ class Index(object):
             for word in words.split():
                 detailed.append(parser.make_wildcard(field, "*"+word+"*"))
         query = parser.make_or(detailed)
-        print query
         results = searcher.search(query)
         return results
 
@@ -163,7 +162,7 @@ class Index(object):
     def create(cls, filename, fuente,  verbose):
         '''Crea los índices.'''
         arch = filename
-        storage = store.FileStorage(arch)
+        storage = FileStorage(arch)
         # creamos el indice
         ix = index.Index(storage, schema=cls.get_schema(), create=True)
 
@@ -218,6 +217,15 @@ def generar_de_html(dirbase, verbose, full_text):
     os.makedirs(filename)
     cant = Index.create(filename, gen(), verbose)
     return cant
+
+class FileStorage(store.FileStorage):
+    """ Subclase de store.FileStorage que setea la compresión al máximo """
+
+    def create_table(self, name, **kwargs):
+        f = self.create_file(name)
+        # actualizamos kwargs con compressed == 9
+        kwargs.update(dict(compressed=9))
+        return tables.TableWriter(f, **kwargs)
 
 
 if __name__ == "__main__":
