@@ -174,14 +174,18 @@ class Index(object):
         # creamos el indice
         ix = index.Index(storage, schema=cls.get_schema(), create=True)
 
+        from src.utiles import ProgressSpinner
         # fill them
+        progress = ProgressSpinner()
         with ix.writer() as writer:
             for nomhtml, titulo, palabras_texto, ptje in fuente:
+                progress.next()
                 if verbose:
                     print "Agregando al índice [%r]  (%r)" % (titulo, nomhtml)
                 writer.add_document(titulo=titulo, #.decode('utf-8'),
                                     nomhtml=unicode(nomhtml),
                                     contenido=palabras_texto)
+        progress.finish()
         ix.optimize()
         return ix.doc_count()
 
