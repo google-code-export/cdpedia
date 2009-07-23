@@ -21,7 +21,6 @@ puntaje.
 """
 from re import compile, MULTILINE, DOTALL
 from urllib2 import unquote
-from urlparse import urljoin
 import codecs
 
 from src import utiles
@@ -61,21 +60,18 @@ class Namespaces(Procesador):
     def __init__(self, wikisitio):
         super(Namespaces, self).__init__(wikisitio)
         self.nombre = "Namespaces"
-        self.log = codecs.open(config.LOG_OMITIDO, "w", "utf-8")
-
 
     def __call__(self, wikiarchivo):
         (namespace, restonom) = utiles.separaNombre(wikiarchivo.url)
 
-#        print 'Namespace:', repr(namespace) or '(Principal)',
+#        print 'Namespace:', repr(namespace)
         # no da puntaje per se, pero invalida segun namespace
-        if namespace in config.NAMESPACES_INVALIDOS:
-#            print '[inválido]'
-            self.log.write(wikiarchivo.url + config.SEPARADOR_FILAS)
-            return (None, [])
-        else:
+        if namespace is None or config.NAMESPACES[namespace]:
 #            print '[válido]'
             return (0, [])
+        else:
+#            print '[inválido]'
+            return (None, [])
 
 
 class OmitirRedirects(Procesador):
@@ -86,7 +82,7 @@ class OmitirRedirects(Procesador):
     def __init__(self, wikisitio):
         super(OmitirRedirects, self).__init__(wikisitio)
         self.nombre = "Redirects-"
-        self.log = codecs.open(config.LOG_REDIRECTS, "w", "utf-8")
+        self.log = codecs.open(config.LOG_REDIRECTS, "a", "utf-8")
         regex = r'<meta http-equiv="Refresh" content="\d*;?url=.*?([^/">]+)"'
         self.capturar = compile(regex).search
 
@@ -94,10 +90,11 @@ class OmitirRedirects(Procesador):
         captura = self.capturar(wikiarchivo.html)
 
         # no da puntaje per se, pero invalida segun namespace
+        sep_col = config.SEPARADOR_COLUMNAS
         if captura:
-            url_redirect = urljoin(wikiarchivo.url, unquote(captura.groups()[0])).decode("utf-8")
+            url_redirect = unquote(captura.groups()[0]).decode("utf-8")
 #            print "Redirect ->", url_redirect.encode("latin1","replace")
-            linea = wikiarchivo.url + config.SEPARADOR_COLUMNAS + url_redirect + config.SEPARADOR_FILAS
+            linea = wikiarchivo.url + sep_col + url_redirect + "\n"
             self.log.write(linea)
             return (None, [])
         else:
@@ -113,7 +110,8 @@ class ExtraerContenido(Procesador):
         super(ExtraerContenido, self).__init__(wikisitio)
         self.nombre = "Contenido"
         self.valor_inicial = 0
-        self.capturar = compile(r'(<h1 class="firstHeading">.+</h1>).*<!-- start content -->\s*(.+)\s*<!-- end content -->', MULTILINE|DOTALL).search
+        regex = '(<h1 class="firstHeading">.+</h1>).*<!-- start content -->\s*(.+)\s*<!-- end content -->'
+        self.capturar = compile(regex, MULTILINE|DOTALL).search
 
     def __call__(self, wikiarchivo):
         # Sólo procesamos html
@@ -132,6 +130,8 @@ class ExtraerContenido(Procesador):
 
             # damos puntaje en función del tamaño del contenido
             return (tamanio, [])
+        else:
+            print "WARNING: no recibimos un html:", wikiarchivo.url
 
 
 class Peishranc(Procesador):
@@ -149,20 +149,20 @@ class Peishranc(Procesador):
 
     def __call__(self, wikiarchivo):
         enlaces = self.capturar(wikiarchivo.html)
-        enlaces_vistos = set([wikiarchivo.url])
-        puntajes = {}
-        if enlaces:
-#            print "Enlaces:"
-            for enlace in enlaces:
-                url_enlace = urljoin(wikiarchivo.url, unquote(enlace)).decode("utf-8")
-                if enlace not in enlaces_vistos:
-                    enlaces_vistos.add(enlace)
-#                    print "  *", repr(url_enlace)
-                    puntajes[url_enlace] = puntajes.get(url_enlace, 0) + 1
+        if not enlaces:
+            return (0, [])
+        enlaces = [unquote(x).decode("utf-8", "replace") for x in enlaces]
 
         # no damos puntaje a la página recibida, sino a todos sus apuntados
-        return (0, puntajes.items())
+        puntajes = {}
+        for lnk in enlaces:
+            puntajes[lnk] = puntajes.get(lnk, 0) + 1
 
+        # sacamos el "auto-bombo"
+        if wikiarchivo.url in puntajes:
+            del puntajes[wikiarchivo.url]
+
+        return (0, puntajes.items())
 
 class Longitud(Procesador):
     """

@@ -7,6 +7,7 @@ import shutil
 import time
 import glob
 import optparse
+import cPickle
 
 import config
 from src.preproceso import preprocesar
@@ -65,10 +66,9 @@ def copiarIndices():
     """Copiar los indices."""
     # las fuentes
     dest_src = path.join(config.DIR_CDBASE, "indice")
-    if os.path.exists(dest_src):
-        shutil.rmtree(dest_src)
+    dir_a_cero(dest_src)
     for name in glob.glob("%s.*" % config.PREFIJO_INDICE):
-        shutil.copytree(name, dest_src)
+        shutil.copy(name, dest_src)
 
 def armarEjecutable():
     pass
@@ -92,20 +92,35 @@ def genera_run_config():
 def preparaTemporal():
     dtemp = config.DIR_TEMP
     if os.path.exists(dtemp):
-        # borramos los dirs (excepto imagenes)
+        # borramos el cdroot
         shutil.rmtree(os.path.join(dtemp,"cdroot"), ignore_errors=True)
-        shutil.rmtree(os.path.join(dtemp,"preprocesado"), ignore_errors=True)
-        # borramos los archivos
-        for arch in glob.glob(os.path.join(dtemp, "*.txt")):
-            os.unlink(arch)
     else:
         os.makedirs(dtemp)
+
+
+class Estadisticas(object):
+    '''Junta los nros de todo lo hecho.'''
+    def __init__(self):
+        self._attrs = "pags_total", "pags_incl", "imgs_incl", "imgs_bogus"
+        for attr in self._attrs:
+            setattr(self, attr, None)
+
+    def dump(self, nomarch):
+        '''Baja la info a un pickle'''
+        for attr in self._attrs:
+            if attr is None:
+                raise ValueError("{0} en None al hacer el dump!".format(attr))
+
+        obj = dict((x, getattr(self, x)) for x in self._attrs)
+        with open(nomarch, "w") as fh:
+            cPickle.dump(obj, fh)
 
 
 def main(src_info, evitar_iso, verbose, desconectado, preprocesado,
          full_text):
 
     articulos = path.join(src_info, "articles")
+    estad = Estadisticas()
 
     if not preprocesado:
         mensaje("Comenzando!")
@@ -119,12 +134,23 @@ def main(src_info, evitar_iso, verbose, desconectado, preprocesado,
             print "\nERROR: No se encuentra el directorio %r" % articulos
             print "Este directorio es obligatorio para el procesamiento general"
             sys.exit()
-        cant = preprocesar.run(articulos, verbose)
-        print '  total: %d páginas procesadas' % cant
+        cantnew, cantold = preprocesar.run(articulos, verbose)
+        print '  total %d páginas procesadas' % cantnew
+        print '      y %d que ya estaban de antes' % cantold
+        estad.pags_total = cantnew + cantold
 
         mensaje("Generando el log de imágenes")
-        result = extraer.run(verbose)
-        print '  total: %d imágenes sacadas de %d archivos' % result
+        taken, bogus, adesc = extraer.run(verbose)
+        print '  total: %5d imágenes extraídas' % taken
+        print '         %5d marcadas como bogus' % bogus
+        print '         %5d a descargar' % adesc
+        estad.imgs_incl = taken
+        estad.imgs_bogus = bogus
+    else:
+        estad.pags_total = 0
+        estad.imgs_incl = 0
+        estad.imgs_bogus = 0
+
 
     if not desconectado:
         mensaje("Descargando las imágenes de la red")
@@ -132,7 +158,11 @@ def main(src_info, evitar_iso, verbose, desconectado, preprocesado,
 
     # de acá para adelante es posterior al pre-procesado
     mensaje("Reduciendo las imágenes descargadas")
-    reducir.run(verbose)
+    notfound = reducir.run(verbose)
+
+    # esto no es lo más exacto, pero good enough
+    estad.imgs_incl -= notfound
+    estad.imgs_bogus += notfound
 
     mensaje("Generando el índice")
     doc_count = cdpindex.generar_de_html(articulos, verbose, full_text)
@@ -159,6 +189,8 @@ def main(src_info, evitar_iso, verbose, desconectado, preprocesado,
         mensaje("Armamos el ISO")
         armarIso("cdpedia.iso")
 
+    estad.dump(path.join(config.DIR_ASSETS, "estad.pkl"))
+    estad.dump("estad.pkl")
     mensaje("Todo terminado!")
 
 
