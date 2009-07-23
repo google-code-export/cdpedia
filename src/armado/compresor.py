@@ -75,14 +75,14 @@ class Comprimido(object):
         # redirect (en ese caso, ponemos el nombre de la página a la que
         # se redirecciona
         seek = 0
-        for root, fileName in fileNames:
+        for dir3, fileName in fileNames:
             # si es redirect, sólo el nombre
             if fileName in redirects:
                 header[fileName] = redirects[fileName]
                 continue
 
             # si es real, info del archivo real
-            fullName = path.join(root, fileName)
+            fullName = path.join(config.DIR_PAGSLISTAS, dir3, fileName)
             size = path.getsize(fullName)
             header[fileName] = (seek, size)
             seek += size
@@ -103,10 +103,10 @@ class Comprimido(object):
         f.write( headerBytes )
 
         # grabo cada uno de los articulos
-        for root, fileName in fileNames:
+        for dir3, fileName in fileNames:
             if fileName in redirects:
                 continue
-            fullName = path.join(root, fileName)
+            fullName = path.join(config.DIR_PAGSLISTAS, dir3, fileName)
             f.write(open( fullName, "rb" ).read())
 
     def get_articulo(self, fileName):
@@ -130,35 +130,32 @@ class Comprimido(object):
 
 
 def generar(verbose):
+    # lo importamos acá porque no es necesario en producción
+    from src.preproceso import preprocesar
+
+    import cProfile
+
     # preparamos el dir destino
     dest = path.join(config.DIR_BLOQUES)
     if os.path.exists(dest):
         shutil.rmtree(dest)
     os.makedirs(dest)
 
-    # recorrer todos los nombres de articulos, y ordenarlos en un dict por
+    # pedir todos los articulos, y ordenarlos en un dict por
     # su numero de bloque, segun el hash
-    fileNames = []
-    if verbose:
-        print "Buscando los artículos"
-    for root, dirs, files in os.walk(unicode(config.DIR_PREPROCESADO)):
-        for fileName in files:
-            fileNames.append( (root, fileName) )
-            if len(fileNames)%10000 == 0:
-                if verbose:
-                    print "  encontrados %d artículos" % len(fileNames)
-
+    fileNames = list(preprocesar.get_top_htmls(config.LIMITE_PAGINAS))
     if verbose:
         print "Procesando", len(fileNames), "articulos"
-    numBloques= max(len(fileNames) // config.ARTICLES_PER_BLOCK, 1)
+
+    numBloques = len(fileNames) // config.ARTICLES_PER_BLOCK + 1
     bloques = {}
-    for root, fileName in fileNames:
+    for dir3, fileName, _ in fileNames:
         if verbose:
-            print "  archs:", root, fileName
+            print "  archs:", repr(dir3), repr(fileName)
         bloqNum = hash(fileName) % numBloques
         if bloqNum not in bloques:
             bloques[bloqNum] = []
-        bloques[bloqNum].append((root,fileName))
+        bloques[bloqNum].append((dir3,fileName))
 
     # armo el diccionario de redirects
     redirects = {}
@@ -167,7 +164,7 @@ def generar(verbose):
         desde = path.basename(desde)
         hasta = path.basename(hasta)
         if verbose:
-            print "  redirs:", desde, hasta
+            print "  redirs:", repr(desde), repr(hasta)
         redirects[desde] = hasta
 
     # armamos cada uno de los comprimidos
@@ -175,6 +172,7 @@ def generar(verbose):
     for bloqNum, fileNames in bloques.items():
         tot += len(fileNames)
         Comprimido.crear(redirects, bloqNum, fileNames, verbose)
+
     return (len(bloques), tot)
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@
       <h5>Navegación</h5>
       <div class='pBody'>
         <ul>
-                  <li id="n-mainpage"><a href="../../../index.html">Portada</a></li>
+                  <li id="n-mainpage"><a href="../../../">Portada</a></li>
                   <li id="n-portal"><a href="http://es.wikipedia.org/">Wikipedia en la Web</a></li>
                   <li id="n-help"><a href="../../../c/o/n/Ayuda%7EContenidos_3c64.html">Ayuda</a></li>
                   <li id="n-sitesupport"><a href="http://wikimediafoundation.org/wiki/Donaciones">Doná a Wikimedia</a></li>
@@ -30,6 +30,21 @@
         <input type="submit" value="Buscar">
       </div>
     <br/>
+    <h5>Estadísticas:</h5>
+        <br/> <small>
+          <center>
+            <table>
+            <tr>
+             <td>Páginas</td>
+             <td>$stt_pag</td>
+            </tr>
+            <tr>
+             <td>Imágenes</td>
+             <td>$stt_img</td>
+            </tr>
+            </table>
+          </center>
+        <br/> </small>
     <h5>Presentada por</h5>
         <center>
         <br/>

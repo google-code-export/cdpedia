@@ -14,24 +14,19 @@ HEADERS = {'User-Agent':
 }
 
 def _descargar(url, fullpath, msg):
-    msg("Verificando", repr(fullpath))
-
-    ya_estaba = os.path.exists(fullpath)
-    msg("  ", "ya estaba" if ya_estaba else "nop")
-
-    if ya_estaba:
-        return
-
     # descargamos!
-    print "Descargando", url
     basedir, _ = os.path.split(fullpath)
     if not os.path.exists(basedir):
         os.makedirs(basedir)
 
     req = urllib2.Request(url.encode("utf8"), headers=HEADERS)
     u = urllib2.urlopen(req)
-    largo = int(u.headers["content-length"]) / 1024.0
-    msg("  %d KB" % round(largo))
+    content_length = u.headers.get("content-length")
+    if content_length is None:
+        msg("  %?? KB")
+    else:
+        largo = int(content_length) / 1024.0
+        msg("  %d KB" % round(largo))
 
     img = u.read()
     with open(fullpath, "wb") as fh:
@@ -40,22 +35,52 @@ def _descargar(url, fullpath, msg):
 
 
 def traer(verbose):
-    errores = 0
+    errores = {}
+    lista_descargar = []
+
+    # vemos cuales tuvieron problemas antes
+    log_errores = os.path.join(config.DIR_TEMP, "imagenes_neterror.txt")
+    if os.path.exists(log_errores):
+        with codecs.open(log_errores, "r", "utf8") as fh:
+            imgs_problemas = set(x.strip() for x in fh)
+    else:
+        imgs_problemas = set()
+
     for linea in codecs.open(config.LOG_IMAGENES, "r", "utf8"):
+        linea = linea.strip()
+        if not linea:
+            continue
+
         arch, url = linea.split(config.SEPARADOR_COLUMNAS)
         fullpath = os.path.join(config.DIR_TEMP, "images", arch)
 
-        def msg(*t):
-            if verbose:
-                print " ".join(str(x) for x in t)
+        if url not in imgs_problemas and not os.path.exists(fullpath):
+            lista_descargar.append((url, fullpath))
 
-        try:
-            _descargar(url, fullpath, msg)
-        except urllib2.HTTPError, err:
-            if err.code == 404:
-                msg("  error 404!")
-                errores += 1
-            else:
-                raise
+    def msg(*t):
+        if verbose:
+            print " ".join(str(x) for x in t)
+
+    tot = len(lista_descargar)
+    for i, (url, fullpath) in enumerate(lista_descargar):
+        print "Descargando (%d/%d)  %s" % (i, tot, url)
+
+        retries = 3
+        while retries:
+            try:
+                _descargar(url, fullpath, msg)
+                break
+            except urllib2.HTTPError, err:
+                msg("  error %d!" % err.code)
+                errores[err.code] = errores.get(err.code, 0) + 1
+                with codecs.open(log_errores, "a", "utf8") as fh:
+                    fh.write(url + "\n")
+                break
+            except Exception, e:
+                print "Uh...", e
+                retries -= 1
+
     if errores:
-        print "WARNING! Tuvimos %d errores 404" % errores
+        print "WARNING! Tuvimos errores:"
+        for code, cant in errores.items():
+            print "       %d %5d" % (code, cant)

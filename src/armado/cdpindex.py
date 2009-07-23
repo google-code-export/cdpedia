@@ -60,7 +60,7 @@ def normaliza(txt):
 def _getHTMLTitle(arch):
     # Todavia no soportamos redirect, asi que todos los archivos son
     # válidos y debería tener TITLE en ellos
-    html = open(arch, "r").read()
+    html = codecs.open(arch, "r", "utf8").read()
     m = SACATIT.match(html)
     if m:
         tit = m.groups()[0]
@@ -153,6 +153,12 @@ class Index(object):
     def get_schema(cls):
         """ crea el Schema de whoosh. """
         analyzer = StandardAnalyzer(stoplist = STOP_WORDS)
+        # definimos el esquema, en este caso es similar a lo que se guardaba
+        # antes en el pickle.
+        # podiramos:
+        #   1) agregar 'phrase=True' al title
+        #   2) usar NGRAM en lugar de TEXT en caso de que nos sea util
+        #   3) user el tipo KEYWORD (habria que sacar estos tags del html)
         schema = Schema(titulo=TEXT(analyzer=analyzer, stored=True),
                         contenido=TEXT(analyzer=analyzer, stored=False),
                         nomhtml=STORED)
@@ -161,17 +167,19 @@ class Index(object):
     @classmethod
     def create(cls, filename, fuente,  verbose):
         '''Crea los índices.'''
-        arch = filename
-        storage = FileStorage(arch)
+        if os.path.exists(filename):
+            shutil.rmtree(filename)
+        os.makedirs(filename)
+        storage = FileStorage(filename)
         # creamos el indice
         ix = index.Index(storage, schema=cls.get_schema(), create=True)
 
         # fill them
         with ix.writer() as writer:
-            for nomhtml, titulo, palabras_texto in fuente:
+            for nomhtml, titulo, palabras_texto, ptje in fuente:
                 if verbose:
                     print "Agregando al índice [%r]  (%r)" % (titulo, nomhtml)
-                writer.add_document(titulo=titulo.decode('utf-8'),
+                writer.add_document(titulo=titulo, #.decode('utf-8'),
                                     nomhtml=unicode(nomhtml),
                                     contenido=palabras_texto)
         ix.optimize()
@@ -181,17 +189,12 @@ class Index(object):
 def generar_de_html(dirbase, verbose, full_text):
     # lo importamos acá porque no es necesario en producción
     from src import utiles
+    from src.preproceso import preprocesar
 
     def gen():
-        fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
-        fh.next() # título
-        for i,linea in enumerate(fh):
-            partes = linea.split(config.SEPARADOR_COLUMNAS)
-            arch, dir3 = partes[:2]
-            if not arch.endswith(".html"):
-                continue
+        fileNames = preprocesar.get_top_htmls(config.LIMITE_PAGINAS)
 
-            (categoria, restonom) = utiles.separaNombre(arch)
+        for i, (dir3, arch, puntaje) in enumerate(fileNames):
             if verbose:
                 print "Indizando [%d] %s" % (i, arch.encode("utf8"))
             # info auxiliar
@@ -199,24 +202,19 @@ def generar_de_html(dirbase, verbose, full_text):
             nomreal = os.path.join(dirbase, nomhtml)
             if os.access(nomreal, os.F_OK):
                 titulo = _getHTMLTitle(nomreal)
-                if full_text:
-                    palabras = _getPalabrasHTML(nomreal)
-                else:
-                    palabras = []
+                palabras = u""
             else:
                 titulo = ""
                 print "WARNING: Archivo no encontrado:", nomreal
+
             # si tenemos max, lo respetamos y entregamos la info
             if max is not None and i > max:
                 raise StopIteration
-            yield (nomhtml, titulo, palabras)
+            yield (nomhtml, titulo, palabras, puntaje)
 
-    filename = config.PREFIJO_INDICE
-    if os.path.exists(filename):
-        shutil.rmtree(filename)
-    os.makedirs(filename)
-    cant = Index.create(filename, gen(), verbose)
+    cant = Index.create(config.PREFIJO_INDICE, gen(), verbose)
     return cant
+
 
 class FileStorage(store.FileStorage):
     """ Subclase de store.FileStorage que setea la compresión al máximo """

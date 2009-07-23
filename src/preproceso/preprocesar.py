@@ -15,29 +15,18 @@ import codecs
 from os.path import join, abspath, sep, dirname
 from urllib2 import urlparse
 import config
+import operator
 
 from src.preproceso import preprocesadores
 
 class WikiArchivo:
-    def __init__(self, wikisitio, ruta):
-        self.ruta = ruta
-
-        # Ojo: ruta_relativa *siempre* empieza con '/' (es relativa a la raíz
-        # del sitio)
-        ruta_relativa = ruta[len(wikisitio.origen):]
-        self.destino = config.DIR_PREPROCESADO + ruta_relativa
-        self.url = os.path.basename(ruta_relativa)
-        self.html = open(ruta).read()
-
-    def resethtml(self):
-        self.html = open(self.ruta).read()
-        return self.html
+    def __init__(self, cwd, ult3dirs, nombre_archivo):
+        self.ruta_relativa = join(ult3dirs, nombre_archivo)
+        self.url = nombre_archivo
+        self.html = open(join(cwd, nombre_archivo)).read()
 
     def guardar(self):
-        destino = self.destino
-        if self.ruta == destino:
-            raise ValueError("Intento de guardar el archivo en si mismo")
-
+        destino = join(config.DIR_PREPROCESADO, self.ruta_relativa)
         try: os.makedirs(dirname(destino))
         except os.error: pass
 
@@ -50,16 +39,48 @@ class WikiSitio(object):
         self.preprocesadores = [proc(self) for proc in preprocesadores.TODOS]
         self.verbose = verbose
 
+        # vemos que habíamos preocesado de antes
+        if os.path.exists(config.LOG_PREPROCESADO):
+            fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
+            fh.next() # título
+            procs = [p.nombre for p in self.preprocesadores]
+            for linea in fh:
+                partes = linea.split(config.SEPARADOR_COLUMNAS)
+                arch = partes[0]
+                dir3 = partes[1]
+                d = {}
+                self.resultados[arch] = d
+                d["dir3"] = dir3
+                for proc, ptje in zip(procs, map(int, partes[2:])):
+                    d[proc] = ptje
+
+        # vemos que habíamos descartado antes
+        self.descartados = set()
+        self._descart = join(config.DIR_TEMP, "descartados.txt")
+        if os.path.exists(self._descart):
+            fh = codecs.open(self._descart, "r", "utf8")
+            for linea in fh:
+                self.descartados.add(linea.strip())
+
+
     def procesar(self):
         resultados = self.resultados
         puntaje_extra = {}
+        de_antes = 0
 
         for cwd, directorios, archivos in os.walk(self.origen):
-            for nombre_archivo in archivos:
-                wikiarchivo = WikiArchivo(self, join(cwd, nombre_archivo))
+            for pag in archivos:
                 partes_dir = cwd.split(os.path.sep)
-                ult3dirs = os.path.join(*partes_dir[-3:])
-                pag = wikiarchivo.url
+                ult3dirs = join(*partes_dir[-3:])
+
+                # vemos si lo teníamos de antes
+                if pag in resultados:
+                    de_antes += 1
+                    continue
+                if pag in self.descartados:
+                    continue
+
+                wikiarchivo = WikiArchivo(cwd, ult3dirs, pag)
                 resultados[pag] = {}
                 resultados[pag]["dir3"] = ult3dirs
 
@@ -73,6 +94,7 @@ class WikiSitio(object):
                         del resultados[pag]
                         if self.verbose:
                             print '  omitido!'
+                        self.descartados.add(pag)
                         break
 
                     # ponemos el puntaje
@@ -81,7 +103,7 @@ class WikiSitio(object):
                     # agregamos el puntaje extra
                     for extra_pag, extra_ptje in otras_pags:
                         ant = puntaje_extra.setdefault(extra_pag, {})
-                        ant[procesador.nombre] = puntaje_extra.get(
+                        ant[procesador.nombre] = ant.get(
                                             procesador.nombre, 0) + extra_ptje
                 else:
                     if self.verbose:
@@ -103,24 +125,17 @@ class WikiSitio(object):
             print "WARNING: Tuvimos %d puntajes perdidos!" % len(perdidos)
 #            print perdidos
 
-        return len(resultados)
+        return len(resultados)-de_antes, de_antes
 
     def guardar(self):
-        # Esto se procesa solo si queremos una salida en modo de texto (LOG_PREPROCESADO != None)
-        if not config.LOG_PREPROCESADO:
-            print "WARNING: no se generó el log porque falta la variable "\
-                  "LOG_PREPROCESADO en config.py"
-            return
-
         log = abspath(config.LOG_PREPROCESADO)
-        sep_cols = unicode(config.SEPARADOR_COLUMNAS)
-        sep_filas = unicode(config.SEPARADOR_FILAS)
-        salida = codecs.open(log, "w", "utf-8")
-
-        # Encabezado:
         preprocs = self.preprocesadores
+        sep_cols = unicode(config.SEPARADOR_COLUMNAS)
+        plantilla = sep_cols.join([u'%s'] * (len(preprocs) + 2)) + "\n"
+
+        # inicializamos el log
+        salida = codecs.open(log, "w", "utf-8")
         columnas = [u'Página', u"Dir3"] + [p.nombre for p in preprocs]
-        plantilla = sep_cols.join([u'%s'] * len(columnas)) + sep_filas
         salida.write(plantilla % tuple(columnas))
 
         # Contenido:
@@ -132,15 +147,44 @@ class WikiSitio(object):
                                                         for p in preprocs]
             salida.write(plantilla % tuple(columnas))
 
+        # descartados
+        with codecs.open(self._descart, "w", "utf8") as fh:
+            for arch in self.descartados:
+                fh.write("%s\n" % arch)
+
         if self.verbose:
             print 'Registro guardado en %s' % log
 
 
+def get_top_htmls(limite):
+    '''Devuelve los htmls con más puntaje.'''
+    # leemos el archivo de preprocesado y calculamos puntaje
+    fh = codecs.open(config.LOG_PREPROCESADO, "r", "utf8")
+    fh.next() # título
+    data = []
+    for linea in fh:
+        partes = linea.split(config.SEPARADOR_COLUMNAS)
+        arch, dir3, _, _, ptj_content, ptj_peishranc = partes
+        ptj_content = int(ptj_content)
+        ptj_peishranc = int(ptj_peishranc)
+
+        # cálculo de puntaje, mezclando y ponderando los individuales
+        puntaje = ptj_content + ptj_peishranc * 5000
+
+        data.append((dir3, arch, puntaje))
+
+    # ordenamos y devolvemos los primeros N
+    data.sort(key=operator.itemgetter(2), reverse=True)
+    data = data[:limite]
+    return data
+
 def run(dir_raiz, verbose=False):
+#    import cProfile
     wikisitio = WikiSitio(dir_raiz, verbose=verbose)
-    cant = wikisitio.procesar()
+#    cProfile.runctx("wikisitio.procesar()", globals(), locals(), "/tmp/procesar.stat")
+    cantnew, cantold = wikisitio.procesar()
     wikisitio.guardar()
-    return cant
+    return cantnew, cantold
 
 if __name__ == "__main__":
     run()
