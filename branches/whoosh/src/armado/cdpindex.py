@@ -165,7 +165,7 @@ class Index(object):
         return schema
 
     @classmethod
-    def create(cls, filename, fuente,  verbose):
+    def create(cls, filename, fuente, verbose):
         '''Crea los índices.'''
         if os.path.exists(filename):
             shutil.rmtree(filename)
@@ -182,8 +182,8 @@ class Index(object):
                 progress.next()
                 if verbose:
                     print "Agregando al índice [%r]  (%r)" % (titulo, nomhtml)
-                writer.add_document(titulo=titulo, #.decode('utf-8'),
-                                    nomhtml=unicode(nomhtml),
+                writer.add_document(titulo=titulo,
+                                    nomhtml=nomhtml.encode('utf-8'),
                                     contenido=palabras_texto)
         progress.finish()
         ix.optimize()
@@ -206,7 +206,10 @@ def generar_de_html(dirbase, verbose, full_text):
             nomreal = os.path.join(dirbase, nomhtml)
             if os.access(nomreal, os.F_OK):
                 titulo = _getHTMLTitle(nomreal)
-                palabras = u""
+                if full_text:
+                    palabras = _getPalabrasHTML(nomreal)
+                else:
+                    palabras = u""
             else:
                 titulo = ""
                 print "WARNING: Archivo no encontrado:", nomreal
