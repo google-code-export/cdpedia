@@ -27,6 +27,7 @@ from whoosh import store, index, tables
 from whoosh.fields import Schema, STORED, ID, KEYWORD, TEXT
 from whoosh.qparser import MultifieldParser
 from whoosh.analysis import StandardAnalyzer
+from whoosh.support.pyparsing import ParseException
 
 usage = """Indice de títulos de la CDPedia
 
@@ -99,42 +100,38 @@ class Index(object):
 
     def listado_valores(self):
         '''Devuelve la info de todos los artículos.'''
-        return sorted(self.id_shelf.values())
+        results = self.search("*")
+        return list(results)
 
     def listado_palabras(self):
         '''Devuelve las palabras indexadas.'''
-        return sorted(self.word_shelf.keys())
+        tr = self.index.term_reader()
+        try:
+            result = [text for _, text in tr.all_terms()]
+        finally:
+            tr.close()
+        return result
 
     def get_random(self):
         '''Devuelve un artículo al azar.'''
-        return random.choice(self.id_shelf.values())
-
-    def _merge_results(self, results):
-        # vemos si tenemos algo más que vacio
-        results = filter(bool, results)
-        if not results:
-            return []
-
-        # el resultado final es la intersección de los parciales ("and")
-        intersectados = reduce(operator.iand, (set(d) for d in results))
-        final = {}
-        for result in results:
-            for pagtit, ptje in result.items():
-                if pagtit in intersectados:
-                    final[pagtit] = final.get(pagtit, 0) + ptje
-
-        final = [(pag, tit, ptje) for (pag, tit), ptje in final.items()]
-        return sorted(final, key=operator.itemgetter(2), reverse=True)
-
+        searcher = self.index.searcher()
+        results = searcher.documents()
+        return random.choice(list(results))
 
     def search(self, words):
         '''Busca palabras completas en el índice.'''
         searcher = self.index.searcher()
         fields = ["contenido", "titulo"]
         parser = MultifieldParser(fields, schema = self.index.schema)
-        query = parser.parse(words)
-        results = searcher.search(query)
-        return results
+        try:
+            query = parser.parse(words)
+        except ParseException:
+            # algo malo paso en el parsing del query
+            query = None
+        if query is not  None:
+            return searcher.search(query)
+        else:
+            return []
 
     def detailed_search(self, words):
         '''Busca palabras parciales en el índice.'''
