@@ -54,8 +54,8 @@ def main(arch_ind):
         listado = indice.listado_valores()
 
     palabras = set()
-    for (pag, tit) in listado:
-        palabras.update(set(tit.split()))
+    for doc in listado:
+        palabras.update(set(doc['titulo'].split()))
     palabras = list(palabras)
 
     # palabras completas
@@ -88,6 +88,9 @@ def main(arch_ind):
             desde = random.randint(0, largo // 2)
             hasta = largo - random.randint(0, largo // 2)
             pal = pal[desde:hasta]
+            pal.replace(':', "\:")
+            #pal.replace('\)', "\)")
+            #pal.replace('\(', "\(")
         return pal
 
     # palabras parciales, de a una
@@ -110,16 +113,12 @@ def main(arch_ind):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print "Usar:  verIndice.py <indice_base>"
-        print "           donde el indice_base es la parte base del nombre,"
-        print "           tienen que estar ambos .ids y .words"
+        print "Usar:  verIndice.py <indice>"
+        print "           donde el indice es path al directorio del indice (.whoosh)"
         sys.exit()
 
     base = sys.argv[1]
-    if not os.access("%s.ids" % base, os.R_OK):
-        print "No se encontró el archivo '%s.ids'" % base
-        sys.exit()
-    if not os.access("%s.words" % base, os.R_OK):
-        print "No se encontró el archivo '%s.words'" % base
+    if not os.access("%s" % base, os.R_OK):
+        print "No se encontró el archivo '%s'" % base
         sys.exit()
     main(base)
