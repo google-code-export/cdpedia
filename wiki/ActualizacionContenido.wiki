@@ -1,0 +1,70 @@
+#summary One-sentence summary of this page.
+
+= Actualización del contenido de la Wikipedia =
+
+La idea es actualizar el ultimo dump estatico disponible que es de junio de 2008. Como alternativa, se evalúa la posibilidad de reactivar la rama de la generación dinámica a partir del xml que se genera cada dos semanas.
+
+Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo comentarios que ayuden a resolver.
+
+
+= Detalles =
+
+De [2]:
+-------------------------------
+NOTE: Dumps are curerntly halted due to Bug 23264
+-------------------------------
+
+De [5]:
+-------------------------------
+What happened to the SQL dumps?
+
+In mid-2005 we upgraded the Wikimedia sites to MediaWiki 1.5, which uses a very different database layout than earlier versions. SQL dumps of the 'cur' and 'old' tables are no longer available because those tables no longer exist.
+
+We don't provide direct dumps of the new 'page', 'revision', and 'text' tables either because aggressive changes to the backend storage make this extra difficult: much data is in fact indirection pointing to another database cluster, and deleted pages which we cannot reproduce may still be present in the raw internal database blobs. The XML dump format provides forward and backward compatibility without requiring authors of third-party dump processing or statistics tools to reproduce our every internal hack. If required, you can use the mwdumper tool (see below) to produce SQL statements compatible with the version 1.4 schema from an XML dump.
+
+De [6]:
+----------------------------------------------
+Using importDump.php, if you have shell access
+
+    Recommended method for general use, but slow for very big data sets. For very large amounts of data, such as a dump of a big Wikipedia, use mwdumper, and import the links tables as separate SQL dumps.
+
+importDump.php is a command line script located in the maintenance folder of your MediaWiki installation. If you have shell access, you can call importdump.php like this:
+
+php importDump.php <dumpfile>
+
+where <dumpfile> is the name of the XML dump file. If the file is compressed and that has a .gz or .bz2 file extension, it is decompressed automatically.
+
+Note Note: to run importDump.php (or any other tool from the maintenance directory), you need to set up your AdminSettings.php file.
+
+Note Note: running importDump.php can take quite a long time. For a large Wikipedia dump with millions of pages, it may take days, even on a fast server. Also note that the information in meta:Help:Import about merging histories, etc. also applies.
+
+After running importDump.php, you may want to run rebuildrecentchanges.php in order to update the content of your Special:Recentchanges page.
+-----------------------------------------------------------------------------------
+
+
+= Links =
+
+* [1] http://en.wikipedia.org/wiki/Wikipedia_database
+
+
+* [2] http://static.wikipedia.org/  
+
+
+[3] https://bugzilla.wikimedia.org/show_bug.cgi?id=23264
+
+
+[4] http://dumps.wikimedia.org/eswiki/20100331/
+
+[5] http://meta.wikimedia.org/wiki/Data_dumps
+
+[6] http://www.mediawiki.org/wiki/Manual:Importing_XML_dumps
+
+[7] http://www.mediawiki.org/wiki/Manual:System_administration
+
+[8] http://www.mediawiki.org/wiki/Special:Export
+
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
