@@ -171,6 +171,41 @@ http://www.kiwix.org/index.php/Tools/en
 
 /Manuel
 --------------------
+de	Pascal Martin <pmartin@linterweb.fr>
+para	dev-l@openzim.org,
+Samuel Klein <meta.sj@gmail.com>
+cc	ibarrags@gmail.com,
+Jimmy Wales <jwales@wikia-inc.com>,
+Madeleine Ball <mad@printf.net>,
+Facundo Batista <facundobatista@gmail.com>,
+Wiki-offline-reader-l@wikimedia.org,
+Offline Wikireaders <wikireader@lists.laptop.org>,
+Cecilia Sagol <csagol@educ.gov.ar>,
+Pomies Patricia <ppomies@educ.gov.ar>,
+Patricio Lorente <patricio.lorente@gmail.com>,
+Enrique Chaparro <cinabrium@gmail.com>,
+Sean Moss-Pultz <sean@openmoko.com>,
+Kul Takanao Wadhwa <kwadhwa@wikimedia.org>,
+Emmanuel Engelhart <emmanuel.engelhart@wikimedia.fr>,
+godiard@gmail.com,
+Diego Mascialino <dmascialino@gmail.com>,
+Hernan Olivera <lholivera@gmail.com>,
+cjb@laptop.org,
+Iris Fernández <irisfernandez@gmail.com>,
+OpenZim devel <dev-l@openzim.org>
+fecha	1 de mayo de 2010 09:11
+asunto	Re: [openZIM dev-l] a DVD with the Spanish Wikipedia (was [Argentina]WikiBrowse improvements)
+	
+ocultar detalles 1 may (hace 12 días)
+	
+Hello,
+
+you could test our solution also :
+http://www.okawix.com/
+
+If you want we could make .iso ready to use.
+
+-----------------------
 De [18]:
 ----------------------
 Bug 18694 - Spanish wikipedia XML dump problems
