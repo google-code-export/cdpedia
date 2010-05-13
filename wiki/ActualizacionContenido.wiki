@@ -623,6 +623,8 @@ After running importDump.php, you may want to run rebuildrecentchanges.php in or
 
 [24] https://launchpad.net/wikipediadumpreader
 
+[25] http://arunxjacob.wordpress.com/2008/01/29/installing-wikipedia-part-2-of-n-getting-the-data/
+
 (este listado deberia ser en orden alfabético)
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
