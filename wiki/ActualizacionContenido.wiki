@@ -9,7 +9,7 @@ Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo c
 
 = Detalles =
 
-(Borrador, hay mucho mas todavía)
+(Borrador de trabajo, apunte de referencia, hay mucho mas todavía)
 
 #. Bajé el último dump.
 #. Busqué los métodos que usan para exportar e importar los dumps [6]
