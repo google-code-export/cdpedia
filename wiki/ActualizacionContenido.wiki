@@ -29,7 +29,7 @@ Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo c
  #. Probé con mwdumper. Fuciono la importacion y la exportacion sin reportar errores. Al revisar el resultado aparecian paginas mal renderizadas o corruptas, que rastreando, ya estaban asi en la mediawiki local que se uso para el trabajo. Se verifico con dump reader que esos articulos se veian bien, asi como en la Wikipedia online.
  #. Hice distintas pruebas en distintas maquinas con la misma configuración. El consumo de tiempo y procesamiento es enorme, asi como el espacio en disco que requiere, por lo cual terminé montando un servidor especificamente para esto, sobre un disco nuevo de 1 tera para no tener problemas de espacio.
  #. Encontré que en la documentacion de mwdumper decía que los ultimos dumps habia que procesarlos con la version actual del codigo, no con los binarios disponibles.
- #. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso.
+ #. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso (no, siguió compilando con gjc, ver configuración).
  #. Hice la prueba con la nueva versión. En este caso, para aislar y rastrear el problema, no voy a enviar el pipe directamente al mysql, sino guardar el sql para poder analizarlo. Si el problema era al importar, no tendría que volver a generarlo. La primera corrida resultó en lo siguiente(start 2010-05-13 0:55): 
 
 hernan@ServerKamaj:~/mwdumper/build$ mwdumper --format=sql:1.5 eswiki-20100331-pages-articles.xml > dump.sql
@@ -86,7 +86,11 @@ Exception in thread "main" java.lang.IllegalArgumentException: Invalid contribut
 	at org.mediawiki.importer.XmlDumpReader.readDump(Unknown Source)
 	at org.mediawiki.dumper.Dumper.main(Unknown Source)
 
-Resumen situación actual:
+
+Esto del invalid contributor, esta reportado pero no como bug, y aparentemente no esta resuelto. Sucede cuando por motivos legales o de otro tipo fue necesario eliminar un contributor. Revisé el código, el tema es que queda como null, tal vez en esos casos deberia ponerse 'deleted' y como id algun codigo compatible.
+
+
+= Resumen situación actual: =
 
 Para realizar la importacion a mediawiki, mwdumper convierte el xml a sql. 
 Separamos la generación de sql hasta verificar que funciona sin errores.
