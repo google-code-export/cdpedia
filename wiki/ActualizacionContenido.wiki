@@ -111,7 +111,47 @@ Las 2 versiones compiladas de mwdumper tienen problemas (diferentes) con el ulti
 
 La compilación a partir del source también, y además tiene 89 warnings que hay que revisar. La documentación dice que está probado con gjc 4, que es la que usamos (4.1), y recomienda el uso de la version sun si aparecen ciertos problemas. Falta probar la versión con sun.
 
+------------
+= Alternativas pendientes de investigación: =
 
+---------------
+Sean Moss-Pultz <sean@openmoko.com>
+para	"Alejandro J. Cura" <alecura@gmail.com>
+
+Hi Alejandro
+
+On Fri, Apr 30, 2010 at 11:43 PM, Alejandro J. Cura <alecura@gmail.com> wrote:
+
+
+    [snip]
+
+    Hernán and Diego are the two interns tasked with updating the data
+    that cdpedia uses to make the cd (it currently uses a static html dump
+    dated June 2008), but they are encountering some problems while trying
+    to make an up to date static html es-wikipedia dump.
+
+    I'm ccing this list of people, because I'm sure you've faced similar
+    issues when making your offline wikipedias, or because maybe you know
+    someone who can help us.
+
+
+We're doing this XML to HTML conversion as one of the steps in our process of rendering Wikipedia for our WikiReader device. We can build Spanish without issues. 
+
+All of our source code is here:
+
+  http://github.com/wikireader/wikireader
+
+The specific portion you would need is the offline-renderer located here:
+
+  http://github.com/wikireader/wikireader/tree/master/host-tools/offline-renderer/
+
+You'll probably need to modify the HTML output for your specific needs. Just let me know if you get stuck. 
+
+Sean
+
+
+
+---------------
 
 --------------------
 De [18]:
