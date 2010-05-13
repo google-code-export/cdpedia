@@ -1,4 +1,4 @@
-#summary One-sentence summary of this page.
+#summary Actualización del contenido de la Wikipedia
 
 = Actualización del contenido de la Wikipedia =
 
@@ -8,6 +8,25 @@ Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo c
 
 
 = Detalles =
+
+(Borrador, hay mucho mas todavía)
+
+#. Bajé el último dump.
+#. Busqué los métodos que usan para exportar e importar los dumps [6]
+#. Descarté importDUMP.php según [6] dado el tamaño del trabajo (igual hice una prueba)
+#. Probé con importDump.php tomando en cuenta [9]
+#. Probé con mwdumper. Fuciono la importacion y la exportacion sin reportar errores. Al revisar el resultado aparecian paginas mal renderizadas o corruptas, que rastreando, ya estaban asi en la mediawiki local que se uso para el trabajo. Se verifico con dump reader que esos articulos se veian bien, asi como en la Wikipedia online.
+
+#. Hice distintas pruebas en distintas maquinas con la misma configuración. El consumo de tiempo y procesamiento es enorme, asi como el espacio en disco que requiere, por lo cual terminé montando un servidor especificamente para esto, sobre un disco nuevo de 1 tera para no tener problemas de espacio.
+
+#. Encontré que en la documentacion de mwdumper decía que los ultimos dumps habia que procesarlos con la version actual del codigo, no con los binarios disponibles.
+
+#. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso. Ahora me falta hacer la prueba con esta nueva version.  
+
+
+Aparentemente el problema estaría en poder importar sin problemas un dump xml a una instalación de mediawiki, que funcione correctamente, y aparentemente desde alli (con tiempo y paciencia) se podría extraer el html estatico sin problemas.
+
+La otra alternativa es o bien pasar del xml al html directamente con alguna herramienta, o bien generar el html en forma dinámica. Estoy explorando las alternativas existentes para cada cosa, y tratando de aislar y documentar el problema para tratar de aislarlo.
 
 De [2]:
 -------------------------------
@@ -50,7 +69,7 @@ After running importDump.php, you may want to run rebuildrecentchanges.php in or
 * [2] http://static.wikipedia.org/  
 
 
-[3] https://bugzilla.wikimedia.org/show_bug.cgi?id=23264
+* [3] https://bugzilla.wikimedia.org/show_bug.cgi?id=23264
 
 
 [4] http://dumps.wikimedia.org/eswiki/20100331/
@@ -63,7 +82,31 @@ After running importDump.php, you may want to run rebuildrecentchanges.php in or
 
 [8] http://www.mediawiki.org/wiki/Special:Export
 
+[9] http://www.mediawiki.org/wiki/Manual:AdminSettings.php
 
+[10]http://meta.wikimedia.org/wiki/Help:Import
+
+[11] http://www.mediawiki.org/wiki/Installation
+
+[12] http://www.mediawiki.org/wiki/Manual:Installation_guide
+
+[13] http://meta.wikimedia.org/wiki/Requests_for_dumps
+
+[14] http://www.zedwood.com/article/145/cpp-convert-wikipedia-xml-dump-to-mysql-utf8-safe
+
+[15] http://mundo-n900.blogspot.com/2010/04/wikipedia-offline-en-tu-n900.html
+
+[16] http://users.softlab.ece.ntua.gr/~ttsiod/buildWikipediaOffline.html
+
+[17] http://en.wikipedia.org/wiki/Wikipedia_database#Dynamic_HTML_generation_from_a_local_XML_database_dump
+
+[18] https://bugzilla.wikimedia.org/show_bug.cgi?id=18694
+
+[19] http://www.mediawiki.org/wiki/Manual:MWDumper
+
+[20] http://myy.helia.fi/~karte/tero-dump/
+
+[21] http://www.mediawiki.org/wiki/Manual_talk:MWDumper
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
   * Headings, paragraphs, and lists
