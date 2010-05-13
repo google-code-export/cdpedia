@@ -62,6 +62,30 @@ Este error no había aparecido en las pruebas que realicé antes utilizando los 
 
 De todos modos ya vi un reporte sobre problemas con algunos caracteres en los titulos del archivo, y como solucionarlo. Y voy a revisar de nuevo mis configuraciones tomando en cuenta los reportes sobre problemas de codificación de caracteres y configuración (En todo el stack). Y también particularmente, con juegos de caracteres en las Wikipedias no en inglés.
 
+Mientras veo de corregir la compilacion, pruebo con otro binario sin gui que anda mejor pero igual se plancha:
+
+775.000 pages (1.809,184/sec), 775.000 revs (1.809,184/sec)
+776.000 pages (1.809,318/sec), 776.000 revs (1.809,318/sec)
+777.000 pages (1.809,792/sec), 777.000 revs (1.809,792/sec)
+778.000 pages (1.810,342/sec), 778.000 revs (1.810,342/sec)
+Exception in thread "main" java.lang.IllegalArgumentException: Invalid contributor
+	at org.mediawiki.importer.XmlDumpReader.closeContributor(Unknown Source)
+	at org.mediawiki.importer.XmlDumpReader.endElement(Unknown Source)
+	at org.apache.xerces.parsers.AbstractSAXParser.endElement(Unknown Source)
+	at org.apache.xerces.parsers.AbstractXMLDocumentParser.emptyElement(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanStartElement(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl$FragmentContentDispatcher.dispatch(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XMLParser.parse(Unknown Source)
+	at org.apache.xerces.parsers.AbstractSAXParser.parse(Unknown Source)
+	at org.apache.xerces.jaxp.SAXParserImpl$JAXPSAXParser.parse(Unknown Source)
+	at org.apache.xerces.jaxp.SAXParserImpl.parse(Unknown Source)
+	at javax.xml.parsers.SAXParser.parse(SAXParser.java:198)
+	at org.mediawiki.importer.XmlDumpReader.readDump(Unknown Source)
+	at org.mediawiki.dumper.Dumper.main(Unknown Source)
+
 
 
 De [18]:
