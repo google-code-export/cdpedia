@@ -152,7 +152,24 @@ Sean
 
 
 ---------------
+de	Manuel Schneider <manuel.schneider@wikimedia.ch>
+para	dev-l@openzim.org
+cc	"Alejandro J. Cura" <alecura@gmail.com>,
+(...)
 
+Hey,
+
+have a look at Kiwix:
+
+http://www.kiwix.org/index.php/Main_Page/es
+
+As far as I know Emmanuel (maintainer of Kiwix) has made ZIM files for es:wp.
+
+Alternatively here is a description how to make them:
+http://www.kiwix.org/index.php/Tools/en
+(http://www.kiwix.org/index.php/Tools/es - not complete)
+
+/Manuel
 --------------------
 De [18]:
 ----------------------
