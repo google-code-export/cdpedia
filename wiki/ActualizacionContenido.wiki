@@ -86,7 +86,16 @@ Exception in thread "main" java.lang.IllegalArgumentException: Invalid contribut
 	at org.mediawiki.importer.XmlDumpReader.readDump(Unknown Source)
 	at org.mediawiki.dumper.Dumper.main(Unknown Source)
 
+Resumen situación actual:
 
+Para realizar la importacion a mediawiki, mwdumper convierte el xml a sql. 
+Separamos la generación de sql hasta verificar que funciona sin errores.
+
+Se dispone de 2 versiones precompiladas, y el codigo fuente actual.
+
+Las 2 versiones compiladas de mwdumper tienen problemas (diferentes) con el ultimo dump, reportados mas arriba.
+
+La compilación a partir del source también, y además tiene 89 warnings que hay que revisar. La documentación dice que está probado con gjc 4, que es la que usamos (4.1), y recomienda el uso de la version sun si aparecen ciertos problemas. Falta probar la versión con sun.
 
 
 
