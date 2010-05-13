@@ -14,10 +14,9 @@ Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo c
 
  #. Bajé el último dump.
  #. Busqué los métodos que usan para exportar e importar los dumps [6], con la idea de replicar exactamente el procedimiento utilizado previamente para la generación del html estático. 
-
  #. El problema consistía en realizar una importación sin problemas de el ultimo dump xml () a una instalación de mediawiki sobre un lamp, que funcione correctamente, y aparentemente desde alli (con tiempo y paciencia) se podría extraer el html estatico sin problemas.
 --------------------------
-#. Esto implicaba hacer una instalación de mediawiki adecuada, reconstruir la Wikipedia en español en el servidor de pruebas a partir de el ultimo xml disponible, y generar el dump del html estático a partir de ese mirror local utilizando la misma herramienta que se utilizó para generar los html estáticos previos.
+ #. Esto implicaba hacer una instalación de mediawiki adecuada, reconstruir la Wikipedia en español en el servidor de pruebas a partir de el ultimo xml disponible, y generar el dump del html estático a partir de ese mirror local utilizando la misma herramienta que se utilizó para generar los html estáticos previos.
  #. Empecé todo el trabajo en mi notebook, y a pesar de que dispuse el espacio en disco necesario para la operación, al ver que había problemas con los resultados y también cuales eran los tiempos de procesamiento, los tiempos que arrojaban las operaciones se hacian muy largos para pensar en hacer varias pruebas, por lo cual replique la instalación en otra máquina con mas espacio y mas potencia (después leería buscando con google que se había tardado 40 dias para hacer el ultimo dump de la version en inglés, y encontrar algunos reportes de bug). 
  #. Instalé una tercera para poder hacer pruebas en paralelo. Como el objetivo era obtener el archivo de resultado una vez, no se trabajó inicialmente en definir un procedimiento determinado para hacerlo, confiando en que la documentación permitiría reproducir un procedimiento bien definido para realizar el procedimiento.
   #. Sin embargo los problemas en los resultados obligaron a reproducir el proceso documentando el detalle de la configuración de las pruebas realizadas a fin de localizar el problema y encontrar o desarrollar una solución. 
