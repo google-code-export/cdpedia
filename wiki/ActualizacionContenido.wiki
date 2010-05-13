@@ -11,21 +11,33 @@ Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo c
 
 (Borrador de trabajo, apunte de referencia, hay mucho mas todavía)
 
-#. Bajé el último dump.
-#. Busqué los métodos que usan para exportar e importar los dumps [6]
-#. Descarté importDUMP.php según [6] dado el tamaño del trabajo (igual hice una prueba)
-#. Probé con importDump.php tomando en cuenta [9]
-#. Probé con mwdumper. Fuciono la importacion y la exportacion sin reportar errores. Al revisar el resultado aparecian paginas mal renderizadas o corruptas, que rastreando, ya estaban asi en la mediawiki local que se uso para el trabajo. Se verifico con dump reader que esos articulos se veian bien, asi como en la Wikipedia online.
 
-#. Hice distintas pruebas en distintas maquinas con la misma configuración. El consumo de tiempo y procesamiento es enorme, asi como el espacio en disco que requiere, por lo cual terminé montando un servidor especificamente para esto, sobre un disco nuevo de 1 tera para no tener problemas de espacio.
+ #. Bajé el último dump.
+ #. Busqué los métodos que usan para exportar e importar los dumps [6], con la idea de replicar exactamente el procedimiento utilizado previamente para la generación del html estático. 
 
-#. Encontré que en la documentacion de mwdumper decía que los ultimos dumps habia que procesarlos con la version actual del codigo, no con los binarios disponibles.
+ #. El problema consistía en realizar una importación sin problemas de el ultimo dump xml () a una instalación de mediawiki sobre un lamp, que funcione correctamente, y aparentemente desde alli (con tiempo y paciencia) se podría extraer el html estatico sin problemas.
+--------------------------
+#. Esto implicaba hacer una instalación de mediawiki adecuada, reconstruir la Wikipedia en español en el servidor de pruebas a partir de el ultimo xml disponible, y generar el dump del html estático a partir de ese mirror local utilizando la misma herramienta que se utilizó para generar los html estáticos previos.
+ #. Empecé todo el trabajo en mi notebook, y a pesar de que dispuse el espacio en disco necesario para la operación, al ver que había problemas con los resultados y también cuales eran los tiempos de procesamiento, los tiempos que arrojaban las operaciones se hacian muy largos para pensar en hacer varias pruebas, por lo cual replique la instalación en otra máquina con mas espacio y mas potencia (después leería buscando con google que se había tardado 40 dias para hacer el ultimo dump de la version en inglés, y encontrar algunos reportes de bug). 
+ #. Instalé una tercera para poder hacer pruebas en paralelo. Como el objetivo era obtener el archivo de resultado una vez, no se trabajó inicialmente en definir un procedimiento determinado para hacerlo, confiando en que la documentación permitiría reproducir un procedimiento bien definido para realizar el procedimiento.
+  #. Sin embargo los problemas en los resultados obligaron a reproducir el proceso documentando el detalle de la configuración de las pruebas realizadas a fin de localizar el problema y encontrar o desarrollar una solución. 
+ #. Con ese fin configuré un server desde cero, con el home en un disco nuevo de 1 terabyte, para olvidarme de los problemas de espacio, con el reciente Ubuntu 10.04 en 64 bits para mi viejo sempron 1150 con 4 g de ram. (Una vez aislados los problemas de configuración, podía replicar los procesos en la otra maquina con 2 athlon si necesitaba mas procesadores)
+ #. Hice todas las configuraciones necesarias con los valores por default.
+ #. Rastree posibles configuraciones alternativas publicadas.
+ #. Cambié la configuración requerida por mediawiki según (referenciar)
+ #. Descarté importDUMP.php según [6] dado el tamaño del trabajo (igual hice una prueba)
+ #. Probé con importDump.php tomando en cuenta [9]
+ #. Probé con mwdumper. Fuciono la importacion y la exportacion sin reportar errores. Al revisar el resultado aparecian paginas mal renderizadas o corruptas, que rastreando, ya estaban asi en la mediawiki local que se uso para el trabajo. Se verifico con dump reader que esos articulos se veian bien, asi como en la Wikipedia online.
 
-#. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso. Ahora me falta hacer la prueba con esta nueva version.  
+ #. Hice distintas pruebas en distintas maquinas con la misma configuración. El consumo de tiempo y procesamiento es enorme, asi como el espacio en disco que requiere, por lo cual terminé montando un servidor especificamente para esto, sobre un disco nuevo de 1 tera para no tener problemas de espacio.
+
+ #. Encontré que en la documentacion de mwdumper decía que los ultimos dumps habia que procesarlos con la version actual del codigo, no con los binarios disponibles.
+
+ #. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso. Ahora me falta hacer la prueba con esta nueva version.  (current)
 
 
-Aparentemente el problema estaría en poder importar sin problemas un dump xml a una instalación de mediawiki, que funcione correctamente, y aparentemente desde alli (con tiempo y paciencia) se podría extraer el html estatico sin problemas.
 
+-------------------------------------------------
 La otra alternativa es o bien pasar del xml al html directamente con alguna herramienta, o bien generar el html en forma dinámica. Estoy explorando las alternativas existentes para cada cosa, y tratando de aislar y documentar el problema para tratar de aislarlo.
 
 De [2]:
