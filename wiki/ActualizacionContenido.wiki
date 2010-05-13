@@ -28,17 +28,18 @@ Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo c
  #. Descarté importDUMP.php según [6] dado el tamaño del trabajo (igual hice una prueba)
  #. Probé con importDump.php tomando en cuenta [9]
  #. Probé con mwdumper. Fuciono la importacion y la exportacion sin reportar errores. Al revisar el resultado aparecian paginas mal renderizadas o corruptas, que rastreando, ya estaban asi en la mediawiki local que se uso para el trabajo. Se verifico con dump reader que esos articulos se veian bien, asi como en la Wikipedia online.
-
  #. Hice distintas pruebas en distintas maquinas con la misma configuración. El consumo de tiempo y procesamiento es enorme, asi como el espacio en disco que requiere, por lo cual terminé montando un servidor especificamente para esto, sobre un disco nuevo de 1 tera para no tener problemas de espacio.
-
  #. Encontré que en la documentacion de mwdumper decía que los ultimos dumps habia que procesarlos con la version actual del codigo, no con los binarios disponibles.
-
- #. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso. Ahora me falta hacer la prueba con esta nueva version.  (current)
+ #. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso.
+ #. Hice la prueba con la nueva versión. En este caso, para aislar y rastrear el problema, no voy a enviar el pipe directamente al mysql, sino guardar el sql para poder analizarlo. Si el problema era al importar, no tendría que volver a generarlo. La primera corrida resultó en lo siguiente(start 2010-05-13 0:55): 
 
 
 
 -------------------------------------------------
-La otra alternativa es o bien pasar del xml al html directamente con alguna herramienta, o bien generar el html en forma dinámica. Estoy explorando las alternativas existentes para cada cosa, y tratando de aislar y documentar el problema para tratar de aislarlo.
+La otra alternativa es o bien pasar del xml al html directamente con alguna herramienta, o bien generar el html en forma dinámica. Estoy explorando las alternativas existentes para cada cosa, y tratando de aislar y documentar el problema para tratar de resolverlo.
+
+-------------------------------------------------
+== Seleccion de las referencias utilizadas ==
 
 De [2]:
 -------------------------------
