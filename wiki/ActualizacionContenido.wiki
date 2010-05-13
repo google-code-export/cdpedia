@@ -88,6 +88,9 @@ Exception in thread "main" java.lang.IllegalArgumentException: Invalid contribut
 
 
 
+
+
+
 De [18]:
 ----------------------
 Bug 18694 - Spanish wikipedia XML dump problems
@@ -509,7 +512,9 @@ After running importDump.php, you may want to run rebuildrecentchanges.php in or
 
 [23] http://www.mediawiki.org/wiki/Manual:AdminSettings.php
 
-_este listado deberia ser en orden alfabético
+[24] https://launchpad.net/wikipediadumpreader
+
+(este listado deberia ser en orden alfabético)
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
   * Headings, paragraphs, and lists
