@@ -89,7 +89,9 @@ Exception in thread "main" java.lang.IllegalArgumentException: Invalid contribut
 	at org.mediawiki.dumper.Dumper.main(Unknown Source)
 
 -------------
-Esto del invalid contributor, esta reportado pero no como bug, y aparentemente no esta resuelto. Sucede cuando por motivos legales o de otro tipo fue necesario eliminar un contributor. Revisé el código, el tema es que queda como null, tal vez en esos casos deberia ponerse 'deleted' y como id algun codigo compatible.
+Esto del invalid contributor, esta reportado como bug https://bugzilla.wikimedia.org/show_bug.cgi?id=18328, estoy investigando las soluciones propuestas. Sucede cuando por motivos legales o de otro tipo fue necesario eliminar un contributor. Revisé el código, el tema es que queda como null, tal vez en esos casos deberia ponerse 'deleted' y como id algun codigo compatible.
+
+
 ------------------------------
 La otra alternativa es o bien pasar del xml al html directamente con alguna herramienta, o bien generar el html en forma dinámica. Estoy explorando las alternativas existentes para cada cosa, y tratando de aislar y documentar el problema para tratar de resolverlo. Ya leí la experiencia previa de Facundo al respecto, aunque lo primero que haré antes de hacer nada en esta rama es volver a revisarlo.
 
