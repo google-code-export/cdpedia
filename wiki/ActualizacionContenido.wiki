@@ -2,7 +2,9 @@
 
 = Actualización del contenido de la Wikipedia =
 
-La idea es actualizar el ultimo dump estatico disponible que es de junio de 2008. Como alternativa, se evalúa la posibilidad de reactivar la rama de la generación dinámica a partir del xml que se genera cada dos semanas.
+La idea es actualizar el ultimo dump estatico disponible que es de junio de 2008. 
+
+Como alternativa, se evalúa la posibilidad de reactivar la rama de la generación dinámica a partir del xml que se genera cada dos semanas.
 
 Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo comentarios que ayuden a resolver.
 
@@ -31,7 +33,7 @@ Voy a llevar aca un log detallado de las pruebas que voy haciendo y recibiendo c
  #. Encontré que en la documentacion de mwdumper decía que los ultimos dumps habia que procesarlos con la version actual del codigo, no con los binarios disponibles.
  #. Compilé la ultima version de mwdumper, que se supone comipila con gjc, pero daba 89 warnings. Revisando los docs, recomendaban la version de java y recompilé con eso (no, siguió compilando con gjc, ver configuración).
  #. Hice la prueba con la nueva versión. En este caso, para aislar y rastrear el problema, no voy a enviar el pipe directamente al mysql, sino guardar el sql para poder analizarlo. Si el problema era al importar, no tendría que volver a generarlo. La primera corrida resultó en lo siguiente(start 2010-05-13 0:55): 
-
+-------------
 hernan@ServerKamaj:~/mwdumper/build$ mwdumper --format=sql:1.5 eswiki-20100331-pages-articles.xml > dump.sql
 1.000 pages (36,496/sec), 1.000 revs (36,496/sec)
 2.000 pages (36,258/sec), 2.000 revs (36,258/sec)
@@ -57,13 +59,13 @@ Caused by: javax.xml.stream.XMLStreamException: required character (got U+20): '
    at gnu.xml.stream.XMLParser.next(libgcj.so.10)
    at gnu.xml.stream.SAXParser.parse(libgcj.so.10)
    ...4 more
-
+-----------
 Este error no había aparecido en las pruebas que realicé antes utilizando los binarios precompilados. (Igual no estoy conforme con como funcionó la compilación, tuvo varios warnings que deberia revisar, en verdad deberia trabajar con un binario sin warnings. Tengo que revisar ese procedimiento, y ver mejor el estado actual de mw)
 
 De todos modos ya vi un reporte sobre problemas con algunos caracteres en los titulos del archivo, y como solucionarlo. Y voy a revisar de nuevo mis configuraciones tomando en cuenta los reportes sobre problemas de codificación de caracteres y configuración (En todo el stack). Y también particularmente, con juegos de caracteres en las Wikipedias no en inglés.
 
 Mientras veo de corregir la compilacion, pruebo con otro binario sin gui que anda mejor pero igual se plancha:
-
+--------------
 775.000 pages (1.809,184/sec), 775.000 revs (1.809,184/sec)
 776.000 pages (1.809,318/sec), 776.000 revs (1.809,318/sec)
 777.000 pages (1.809,792/sec), 777.000 revs (1.809,792/sec)
@@ -86,10 +88,18 @@ Exception in thread "main" java.lang.IllegalArgumentException: Invalid contribut
 	at org.mediawiki.importer.XmlDumpReader.readDump(Unknown Source)
 	at org.mediawiki.dumper.Dumper.main(Unknown Source)
 
-
+-------------
 Esto del invalid contributor, esta reportado pero no como bug, y aparentemente no esta resuelto. Sucede cuando por motivos legales o de otro tipo fue necesario eliminar un contributor. Revisé el código, el tema es que queda como null, tal vez en esos casos deberia ponerse 'deleted' y como id algun codigo compatible.
+------------------------------
+La otra alternativa es o bien pasar del xml al html directamente con alguna herramienta, o bien generar el html en forma dinámica. Estoy explorando las alternativas existentes para cada cosa, y tratando de aislar y documentar el problema para tratar de resolverlo. Ya leí la experiencia previa de Facundo al respecto, aunque lo primero que haré antes de hacer nada en esta rama es volver a revisarlo.
 
+De todos modos hice algunas pruebas:
+ # Dump reader, aparentemente funciona sin problemas, lo usé para verificar que las paginas que yo veia mal en el html estático, que tambien estaban mal en mediawiki, se leian correctamente de ese mismo dump. Pero no genera el html original
+ # (Fast?) Offline Reader, no lo pude hacer funcionar de una, si es necesario probaré con las versiones con las que el reporta. Usa Django, un parser que parece discontinuado, y aparentemente se fueron resolviendo algunos bugs, incluyendo uno que tambien tenía que ver con los caracteres de idiomas diferentes al inglés.
 
+ # Probe algun otro que si tengo tiempo documentaré.
+
+----------------------------------
 = Resumen situación actual: =
 
 Para realizar la importacion a mediawiki, mwdumper convierte el xml a sql. 
@@ -103,7 +113,7 @@ La compilación a partir del source también, y además tiene 89 warnings que ha
 
 
 
-
+--------------------
 De [18]:
 ----------------------
 Bug 18694 - Spanish wikipedia XML dump problems
@@ -430,15 +440,7 @@ There is a report on dewiki Village Pump about this issue on dewikisource
 
 
 -------------------------------------------------
-La otra alternativa es o bien pasar del xml al html directamente con alguna herramienta, o bien generar el html en forma dinámica. Estoy explorando las alternativas existentes para cada cosa, y tratando de aislar y documentar el problema para tratar de resolverlo. Ya leí la experiencia previa de Facundo al respecto, aunque lo primero que haré antes de hacer nada en esta rama es volver a revisarlo.
 
-De todos modos hice algunas pruebas:
- # Dump reader, aparentemente funciona sin problemas, lo usé para verificar que las paginas que yo veia mal en el html estático, que tambien estaban mal en mediawiki, se leian correctamente de ese mismo dump. Pero no genera el html original
- # (Fast?) Offline Reader, no lo pude hacer funcionar de una, si es necesario probaré con las versiones con las que el reporta. Usa Django, un parser que parece discontinuado, y aparentemente se fueron resolviendo algunos bugs, incluyendo uno que tambien tenía que ver con los caracteres de idiomas diferentes al inglés.
-
- # Probe algun otro que si tengo tiempo documentaré.
-
--------------------------------------------------
 == Seleccion de las referencias utilizadas ==
 
 De [2]:
