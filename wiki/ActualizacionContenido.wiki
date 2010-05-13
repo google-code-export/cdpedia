@@ -107,6 +107,12 @@ After running importDump.php, you may want to run rebuildrecentchanges.php in or
 [20] http://myy.helia.fi/~karte/tero-dump/
 
 [21] http://www.mediawiki.org/wiki/Manual_talk:MWDumper
+
+[22] http://meta.wikimedia.org/wiki/Help:Import
+
+[23] http://www.mediawiki.org/wiki/Manual:AdminSettings.php
+
+_este listado deberia ser en orden alfabético
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
   * Headings, paragraphs, and lists
