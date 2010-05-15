@@ -66,6 +66,7 @@ De todos modos ya vi un reporte sobre problemas con algunos caracteres en los ti
 
 Mientras veo de corregir la compilacion, pruebo con otro binario sin gui que anda mejor pero igual se plancha:
 --------------
+{{{
 775.000 pages (1.809,184/sec), 775.000 revs (1.809,184/sec)
 776.000 pages (1.809,318/sec), 776.000 revs (1.809,318/sec)
 777.000 pages (1.809,792/sec), 777.000 revs (1.809,792/sec)
@@ -87,9 +88,25 @@ Exception in thread "main" java.lang.IllegalArgumentException: Invalid contribut
 	at javax.xml.parsers.SAXParser.parse(SAXParser.java:198)
 	at org.mediawiki.importer.XmlDumpReader.readDump(Unknown Source)
 	at org.mediawiki.dumper.Dumper.main(Unknown Source)
-
+}}}
 -------------
 Esto del invalid contributor, esta reportado como bug https://bugzilla.wikimedia.org/show_bug.cgi?id=18328, estoy investigando las soluciones propuestas. Sucede cuando por motivos legales o de otro tipo fue necesario eliminar un contributor. Revisé el código, el tema es que queda como null, tal vez en esos casos deberia ponerse 'deleted' y como id algun codigo compatible.
+
+Update: hice alguna pruebas minimas con las instrucciones que subieron pero sigue dando error. Sigo rastreando el codij ojava del mwdumper, si es el unico problema que queda deberia resolverse fácil.
+
+--------------
+= Sintesis de alternativas a explorar: =
+ # importDump (el de mediawiki, lento y no recomendado para gran tamaño)
+ # mwimport
+ # html2sql
+ # TeroDump
+ # DumpReader
+ # WikiTaxi
+ # WikiFilter
+ # wikiprep
+ # kiwix
+ # WikiReader
+ # Okawix
 
 
 ------------------------------
@@ -114,7 +131,7 @@ Las 2 versiones compiladas de mwdumper tienen problemas (diferentes) con el ulti
 La compilación a partir del source también, y además tiene 89 warnings que hay que revisar. La documentación dice que está probado con gjc 4, que es la que usamos (4.1), y recomienda el uso de la version sun si aparecen ciertos problemas. Falta probar la versión con sun.
 
 ------------
-= Alternativas pendientes de investigación: =
+= Alternativas pendientes de investigación, sugeridas por la comunidad: =
 
 ---------------
 Sean Moss-Pultz <sean@openmoko.com>
