@@ -92,7 +92,7 @@ Exception in thread "main" java.lang.IllegalArgumentException: Invalid contribut
 -------------
 Esto del invalid contributor, esta reportado como bug https://bugzilla.wikimedia.org/show_bug.cgi?id=18328, estoy investigando las soluciones propuestas. Sucede cuando por motivos legales o de otro tipo fue necesario eliminar un contributor. Revisé el código, el tema es que queda como null, tal vez en esos casos deberia ponerse 'deleted' y como id algun codigo compatible.
 
-Update: hice alguna pruebas minimas con las instrucciones que subieron pero sigue dando error. Sigo rastreando el codij ojava del mwdumper, si es el unico problema que queda deberia resolverse fácil.
+Update: hice alguna pruebas minimas con las instrucciones que subieron (https://bugzilla.wikimedia.org/show_bug.cgi?id=18328) pero sigue dando error. Sigo rastreando el codigo java del mwdumper, si es el unico problema que queda deberia resolverse fácil. 
 
 --------------
 = Sintesis de alternativas a explorar: =
