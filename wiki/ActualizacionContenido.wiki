@@ -2,6 +2,11 @@
 
 = Actualización del contenido de la Wikipedia =
 
+Ya tengo un mirror funcionando. Las primeras pruebas dan que la exportacion completa a HTML llevaría unas 3000 horas de procesamiento en un sempron, unos 4 meses.
+
+Ordenaré mis notas para resumir el procedimiento. (7/7/10)
+
+---------------
 La idea es actualizar el ultimo dump estatico disponible que es de junio de 2008. 
 
 Como alternativa, se evalúa la posibilidad de reactivar la rama de la generación dinámica a partir del xml que se genera cada dos semanas.
