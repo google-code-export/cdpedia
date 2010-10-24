@@ -6,8 +6,11 @@
         <link rel="search" type="application/opensearchdescription+xml" href="/w/opensearch_desc.php" title="Wikipedia (Español)" />
         <link rel="copyright" href="../../../COPYING.html" />
     <title>$titulo - Wikipedia, la enciclopedia libre</title>
-    <style type="text/css">/*<![CDATA[*/ @import "../../../skins/offline/main.css"; /*]]>*/</style>
-    <link rel="stylesheet" type="text/css" media="print" href="../../../skins/common/commonPrint.css" />
+    <style type="text/css">/*<![CDATA[*/ @import "../../../skins/main.css"; /*]]>*/</style>
+    <style type="text/css">/*<![CDATA[*/ @import "../../../skins/shared.css"; /*]]>*/</style>
+    <style type="text/css">/*<![CDATA[*/ @import "../../../skins/combined.min.css"; /*]]>*/</style>
+    <style type="text/css">/*<![CDATA[*/ @import "../../../skins/jquery-ui-1.7.2.css"; /*]]>*/</style>
+    <link rel="stylesheet" type="text/css" media="print" href="../../../skins/commonPrint.css" />
     <!--[if lt IE 5.5000]><style type="text/css">@import "../../../skins/monobook/IE50Fixes.css";</style><![endif]-->
     <!--[if IE 5.5000]><style type="text/css">@import "../../../skins/monobook/IE55Fixes.css";</style><![endif]-->
     <!--[if IE 6]><style type="text/css">@import "../../../skins/monobook/IE60Fixes.css";</style><![endif]-->

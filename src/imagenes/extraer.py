@@ -170,6 +170,7 @@ class ParseaImagenes(object):
         p1, img, p3 = m.groups()
         WIKIMEDIA = "http://upload.wikimedia.org/"
         WIKIPEDIA = "http://es.wikipedia.org/"
+        BITS = "http://bits.wikimedia.org/"
         if self.test:
             print "img", img
 
@@ -210,12 +211,19 @@ class ParseaImagenes(object):
             # http://upload.wikimedia.org/wikipedia/commons/
             #   thumb/2/22/Heckert_GNU_white.svg/64px-Heckert_GNU_white.svg.png
             web_url = WIKIMEDIA + img[27:]
-
             partes = img[46:].split("/")
-            if len(partes) != 5:
+            if len(partes) == 5:
+                del partes[3]
+            elif len(partes) == 3:
+                pass
+            else:
                 raise ValueError("Formato de imagen feo! %r" % partes)
-            del partes[3]
+
             dsk_url = "../../../../images/shared/" + "/".join(partes)
+
+        elif img.startswith("http://bits.wikimedia.org/"):
+            web_url = img
+            dsk_url = "../../../../images/shared/" + img
 
         elif img.startswith("../../../../misc") or\
              img.startswith("../../../../skins"):
