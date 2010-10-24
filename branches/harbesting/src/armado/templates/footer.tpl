@@ -1,4 +1,5 @@
         <div class="visualClear"></div>
+         </div>
       </div>
     </div>
       </div>
@@ -9,21 +10,21 @@
         title="Portada"></a>
     </div>
     <script type="text/javascript"> if (window.isMSIE55) fixalpha(); </script>
-        <div class="portlet" id="p-navigation">
+        <div class="noprint collapsible-nav" id="mw-panel">
     <br/>
       <h5>Navegación</h5>
       <div class="pBody">
         <ul>
           <li id="n-mainpage"><a href="../../../">Portada</a></li>
           <li id="n-portal"><a class="external" href="http://es.wikipedia.org/">Wikipedia en la Web</a></li>
-          <li id="n-help"><a href="../../../c/o/n/Ayuda%7EContenidos_3c64.html">Ayuda</a></li>
+          <li id="n-help"><a href="../../../c/o/n/Ayuda07EContenidos_3c64.html">Ayuda</a></li>
         </ul>
       </div>
     <br/>
     <h5>Búsquedas:</h5>
       <div id="searchBody" class="pBody">
         <form method="get" action="/dosearch">
-        <input id="searchInput" name="keywords" />
+        <input id="searchInput" name="keywords" size="17"/>
         <input type="submit" value="Buscar" />
         </form>
       </div>
@@ -37,8 +38,7 @@
     <br/>
     <h5>Estadísticas:</h5>
     <div class="pBody">
-        <br/> <small>
-          <center>
+        <br/>
             <table>
             <tr>
              <td>Páginas</td>
@@ -49,8 +49,7 @@
              <td>$stt_img</td>
             </tr>
             </table>
-          </center>
-        <br/> </small>
+        <br/>
     </div>
     <br/>
     <h5>Presentada por</h5>
@@ -79,8 +78,8 @@
         </div>
 
         <table>
-            <tr><td width=55%>
-                <ul id="f-list">
+            <tr><td width="55%">
+                <ul class="f-list">
                     <li>
                         $orig_link
                     </li> 
@@ -88,19 +87,19 @@
                         Contenido disponible bajo los términos de la <a class="internal" href="/articles/extern/fdl.html">Licencia de documentación libre de GNU</a> (véase <b><a class="internal" href="/Wikipedia~Derechos_de_autor_3ece.html">Derechos de autor</a></b>).<br />
                         Wikipedia® es una marca registrada de la organización sin ánimo de lucro <a class="external" href="http://wikimediafoundation.org/wiki/Portada">Wikimedia Foundation, Inc.</a><br />
                     </li>
-                    <li id="f-about">
+                    <li class="f-about">
                         <a href="../../../a/c/e/Wikipedia%7EAcerca_de_959f.html" title="Wikipedia:Acerca de">Acerca de Wikipedia</a>
                     </li>
-                    <li id="f-disclaimer">
+                    <li class="f-disclaimer">
                         <a href="../../../l/i/m/Wikipedia%7ELimitaci%C3%B3n_general_de_responsabilidad_a0a2.html" title="Wikipedia:Limitación general de responsabilidad">Aviso legal</a>
                     </li> 
                 </ul>
-            </td><td width=40%>
-                <ul id="f-list">
-                    <li id="f-about">
+            </td><td width="40%">
+                <ul class="f-list">
+                    <li class="f-about">
                         CDPedia es un proyecto de <a class="external" href="http://www.python.org.ar/">Python Argentina</a><br/>
                     </li>
-                    <li id="f-disclaimer">
+                    <li class="f-disclaimer">
                         Los artículos e imágenes son mostrados aquí sin ningún<br/>
                         procesamiento más que el estrictamente necesario para<br/>
                         la correcta navegación del usuario.<br/>

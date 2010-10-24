@@ -5,23 +5,25 @@
 from __future__ import division
 from __future__ import with_statement
 
-import BaseHTTPServer
-import cPickle
-import cdpindex
-import cgi
-import compresor
-import config
-import operator
 import os
 import re
+import cgi
+import time
 import socket
 import string
-import threading
-import time
 import urllib   # .quote, .unquote
 import urllib2  # .urlparse
+import cPickle
+import operator
+import threading
+import posixpath
+import BaseHTTPServer
 from mimetypes import guess_type
 
+import config
+import to3dirs
+import cdpindex
+import compresor
 
 __version__ = "0.1.1.1.1.1"
 
@@ -95,7 +97,10 @@ def get_stats():
     d = cPickle.load(open(os.path.join(config.DIR_ASSETS, "estad.pkl")))
     pag = "%5d (%2d%%)" % (d['pags_incl'], 100 * d['pags_incl'] / d['pags_total'])
     i_tot = d['imgs_incl'] + d['imgs_bogus']
-    img = "%5d (%2d%%)" % (d['imgs_incl'], 100 * d['imgs_incl'] / i_tot)
+    if i_tot == 0:
+        img = 0
+    else:
+        img = "%5d (%2d%%)" % (d['imgs_incl'], 100 * d['imgs_incl'] / i_tot)
     return pag, img
 
 
@@ -150,38 +155,23 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def _get_orig_link(self, path):
         """A partir del path devuelve el link original externo."""
-        path = path[:-5] # sin el .html
-
-        # veamos si tenemos "_" + cuatro dígitos hexa
-        if len(path) > 5 and path[-5] == "_":
-            cuad = path[-4:]
-            try:
-                int(cuad, 16)
-            except ValueError:
-                pass
-            else:
-                path = path[:-5]
         orig_link = "http://es.wikipedia.org/wiki/" + path
-        return orig_link.decode("utf8")
+        return orig_link
 
     def _get_contenido(self, path):
 #        print "Get contenido", path
         match = re.match("[^/]+\/[^/]+\/[^/]+\/(.*)", path)
         if match is not None:
             path = match.group(1)
-
-        if path[-4:] != "html":
-            raise ContentNotFound(u"Sólo buscamos páginas HTML!")
-
         orig_link = self._get_orig_link(path)
         try:
-            data = self._art_mngr.getArticle(path.decode("utf-8"))
+            data = self._art_mngr.getArticle(path)
         except Exception, e:
             msg = u"Error interno al buscar contenido: %s" % e
             raise ContentNotFound(msg)
 
         if data is None:
-            m  = NOTFOUND % (path.decode("utf8"), orig_link)
+            m  = NOTFOUND % (path, orig_link)
             raise ContentNotFound(m)
 
         title = getTitleFromData(data)
@@ -239,20 +229,20 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         arranque = path.split("/")[0]
 
-        # los links internos apuntan a algo arrancando con articles, se lo
+        # los links internos apuntan a algo arrancando con wiki, se lo
         # sacamos y tenemos el path que nos sirve
-        if arranque == "articles":
-            path = path[9:]
-            arranque = path.split("/")[0]
+        if arranque == "wiki":
+            articulo = path[len("wiki/"):].decode("utf-8")
+            path = to3dirs.to_complete_path(articulo)
 
         # a todo lo que está afuera de los artículos, en assets, lo tratamos
         # diferente
-        if arranque in config.ASSETS + ["images",  "extern", "tutorial"]:
+        elif arranque in config.ASSETS + ["images",  "extern", "tutorial"]:
             asset_file = os.path.join(config.DIR_ASSETS, path)
             if os.path.isdir(asset_file):
                 print "WARNING: ", repr(asset_file), "es un directorio"
                 return "", None
-            if os.path.exists(asset_file): 
+            if os.path.exists(asset_file):
                 asset_data = open(asset_file, "rb").read()
 
                 # los fuentes del tutorial (rest) son archivos de texto plano
@@ -278,7 +268,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     @ei.espera_indice
     def al_azar(self, query):
         link, tit = self.index.get_random()
-        return self._get_contenido(link.encode("utf8"))
+        return self._get_contenido(link)
 
     @ei.espera_indice
     def dosearch(self, query):
@@ -346,6 +336,8 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # artículos originales
         agrupados = {}
         for link, titulo, ptje, original, texto in candidatos:
+            # quitamos 3 dirs del link y agregamos "wiki"
+            link = u"wiki" + link[5:]
             # los tokens los ponemos en minúscula porque las mayúscula les
             # da un efecto todo entrecortado
             tit_tokens = set(LIMPIA.sub("", x.lower()) for x in titulo.split())
