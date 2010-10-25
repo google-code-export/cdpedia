@@ -1,68 +1,64 @@
-        <div class="visualClear"></div>
-         </div>
-      </div>
-    </div>
-      </div>
-      <div id="column-one">
-    <div class="portlet" id="p-logo">
-      <a style="background-image: url(../../../misc/Wikipedia-logo-es.png);"
-        href="../../../index.html"
-        title="Portada"></a>
-    </div>
-    <script type="text/javascript"> if (window.isMSIE55) fixalpha(); </script>
-        <div class="noprint collapsible-nav" id="mw-panel">
-    <br/>
-      <h5>Navegación</h5>
-      <div class="pBody">
-        <ul>
-          <li id="n-mainpage"><a href="../../../">Portada</a></li>
-          <li id="n-portal"><a class="external" href="http://es.wikipedia.org/">Wikipedia en la Web</a></li>
-          <li id="n-help"><a href="../../../c/o/n/Ayuda07EContenidos_3c64.html">Ayuda</a></li>
-        </ul>
-      </div>
-    <br/>
-    <h5>Búsquedas:</h5>
-      <div id="searchBody" class="pBody">
-        <form method="get" action="/dosearch">
-        <input id="searchInput" name="keywords" size="17"/>
-        <input type="submit" value="Buscar" />
-        </form>
-      </div>
-    <br/>
-    <h5>Sorprendete:</h5>
-      <div class="pBody">
-        <form method="get" action="/al_azar">
-        <input type="submit" value="Página al azar" />
-        </form>
-      </div>
-    <br/>
-    <h5>Estadísticas:</h5>
-    <div class="pBody">
-        <br/>
-            <table>
-            <tr>
-             <td>Páginas</td>
-             <td>$stt_pag</td>
-            </tr>
-            <tr>
-             <td>Imágenes</td>
-             <td>$stt_img</td>
-            </tr>
-            </table>
-        <br/>
-    </div>
-    <br/>
-    <h5>Presentada por</h5>
-    <div class="pBody">
-        <center>
-        <br/>
-        <a href="http://www.python.org.ar/"><img src="../../../extern/pyar-logo.png" alt="Python Argentina" /></a>
-        </center>
-    </div>
-          </div><!-- end of the left (by default at least) column -->
-      <div class="visualClear"></div>
-      <div id="footer">
-
+            </div>
+            <!-- /bodyContent -->
+        </div>
+        <!-- /content -->
+        <!-- panel -->
+        <div id="mw-panel" class="noprint" style="padding-left:5px;">
+            <!-- logo -->
+                    <div id="p-logo"> <a style="background-image: url(../../../misc/Wikipedia-logo-es.png);" href="../../../index.html" title="Portada"></a> </div>
+            <!-- /logo -->
+            <br/>
+              <h5>Navegación</h5>
+              <div class="pBody">
+                <ul>
+                  <li id="n-mainpage"><a href="../../../">Portada</a></li>
+                  <li id="n-portal"><a class="external" href="http://es.wikipedia.org/">Wikipedia en la Web</a></li>
+                  <li id="n-help"><a href="../../../c/o/n/Ayuda07EContenidos_3c64.html">Ayuda</a></li>
+                </ul>
+              </div>
+            <br/>
+            <h5>Búsquedas:</h5>
+              <div id="searchBody" class="pBody">
+                <form method="get" action="/dosearch">
+                <input id="searchInput" name="keywords" size="16"/>
+                <input type="submit" value="Buscar" />
+                </form>
+              </div>
+            <br/>
+            <h5>Sorprendete:</h5>
+              <div class="pBody">
+                <form method="get" action="/al_azar">
+                <input type="submit" value="Página al azar" />
+                </form>
+              </div>
+            <br/>
+            <h5>Estadísticas:</h5>
+            <div class="pBody">
+                <br/>
+                    <table>
+                    <tr>
+                     <td>Páginas</td>
+                     <td>$stt_pag</td>
+                    </tr>
+                    <tr>
+                     <td>Imágenes</td>
+                     <td>$stt_img</td>
+                    </tr>
+                    </table>
+                <br/>
+            </div>
+            <br/>
+            <h5>Presentada por</h5>
+            <div class="pBody">
+                <center>
+                <br/>
+                <a href="http://www.python.org.ar/"><img src="../../../extern/pyar-logo.png" alt="Python Argentina" /></a>
+                </center>
+            </div>
+        </div>
+        <!-- /panel -->
+        <!-- footer -->
+        <div id="footer">
         <div id="f-copyrightico">
             <a href="http://wikimediafoundation.org/"><img src="../../../misc/wikimedia-button.png" border="0" alt="Wikimedia Foundation"/></a>
         </div>
@@ -108,8 +104,13 @@
                 </ul>
             </td></tr>
         </table>
+        </div>
+        <!-- /footer -->
+        <!-- fixalpha -->
+        <script type="text/javascript"> if ( window.isMSIE55 ) fixalpha(); </script>
+        <!-- /fixalpha -->
+<script type="text/javascript">if (window.runOnloadHook) runOnloadHook();</script>
+</body>
 
-      </div>
-    </div>
-  </body>
+
 </html>

@@ -117,7 +117,7 @@ class ExtraerContenido(Procesador):
         super(ExtraerContenido, self).__init__(wikisitio)
         self.nombre = "Contenido"
         self.valor_inicial = 0
-        regex = '(<h1 id="firstHeading" class="firstHeading">.+</h1>).*<!-- /subtitle -->\s*(.+)\s*<!-- /catlinks -->'
+        regex = '(<h1 id="firstHeading" class="firstHeading">.+</h1>)(.+)\s*<!-- /catlinks -->'
         self.capturar = compile(regex, MULTILINE|DOTALL).search
         self.no_ocultas = compile('<div id="mw-hidden-catlinks".*?</div>',
                                                             MULTILINE|DOTALL)
