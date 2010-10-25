@@ -33,7 +33,7 @@
               </div>
             <br/>
             <h5>Estadísticas:</h5>
-            <div class="pBody">
+            <div class="pBody" style="font-size:60%">
                 <br/>
                     <table>
                     <tr>
