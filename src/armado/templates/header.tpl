@@ -25,7 +25,7 @@
     <!--[if IE]><script type="text/javascript" src="../../../skins/common/IEFixes.js"></script>
     <meta http-equiv="imagetoolbar" content="no" /><![endif]-->
 
-    <!-- <link rel="stylesheet" href="../../../skins/offline/main.css" type="text/css" media="all" />-->
+    <script type="text/javascript" src="../../../skins/js/header.js"></script>
     <script type="text/javascript" src="../../../skins/js/wikibits.js"></script>
     <script type="text/javascript" src="../../../skins/js/jquery.js"></script>
     <script type="text/javascript" src="../../../skins/js/ajax.js"></script>
@@ -35,7 +35,6 @@
     <script type="text/javascript" src="../../../skins/js/md5.js"></script>
     <script type="text/javascript" src="../../../skins/js/utf8.js"></script>
     <script type="text/javascript" src="../../../skins/js/lookup.js"></script>
-    <!-- <script type="text/javascript" src="../../../raw/gen.js"></script> -->
 
 <style type="text/css">
   a.nopo {border-bottom: 1px dashed red; text-decoration:none; color: red;}
