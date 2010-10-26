@@ -193,9 +193,17 @@ class ParseaImagenes(object):
             web_url = WIKIMEDIA + img[12:]
             dsk_url="../../../../images/" + img[12:]
 
+        elif img.startswith("http://upload.wikimedia.org/math"):
+            web_url = img
+            dsk_url = "../../../../images" + img[39:]
+
         elif img.startswith("../../../../extensions/"):
             web_url = WIKIPEDIA + "w/" + img[12:]
             dsk_url = "../../../../images/" + img[12:]
+
+        elif img.startswith("/w/extensions/"):
+            web_url = WIKIMEDIA + img[1:]
+            dsk_url = "../../../../images/" + img[1:]
 
         elif img.startswith("../../../../images/shared"):
             # ../../../../images/shared/b/ba/LocatieZutphen.png
@@ -206,6 +214,10 @@ class ParseaImagenes(object):
             # ../../../../images/timeline/8f9a24cab55663baf5110f82ebb97d17.png
             web_url = WIKIMEDIA + "wikipedia/es/timeline/%s" % img[27:]
             dsk_url = img
+
+        elif img.startswith("http://upload.wikimedia.org/wikipedia/es/timeline/"):
+              web_url = img
+              dsk_url = "../../../../images/timeline/" + img[50:]
 
         elif img.startswith("http://upload.wikimedia.org/wikipedia/commons/"):
             # http://upload.wikimedia.org/wikipedia/commons/
