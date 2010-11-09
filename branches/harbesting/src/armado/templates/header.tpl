@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../../../skins/css/Print.css" type="text/css" media="print" />
     <link rel="stylesheet" href="../../../skins/css/Handheld.css" type="text/css" media="handheld" />
     <link rel="stylesheet" href="../../../skins/css/Vector.css" type="text/css" media="all" />
-    
+
     <!--[if lt IE 5.5000]><style type="text/css">@import "../../../skins/monobook/IE50Fixes.css";</style><![endif]-->
     <!--[if IE 5.5000]><style type="text/css">@import "../../../skins/monobook/IE55Fixes.css";</style><![endif]-->
     <!--[if IE 6]><style type="text/css">@import "../../../skins/monobook/IE60Fixes.css";</style><![endif]-->
