@@ -117,7 +117,7 @@ def genera_run_config():
     f.write('DIR_ASSETS = "assets"\n')
     f.write('ASSETS = %s\n' % config.ASSETS)
     f.write('DIR_INDICE = "indice"\n')
-    f.write('INDEX = "%s"' % config.INDEX)
+    f.write('INDEX = "%s"\n' % config.INDEX)
     f.write('DESTACADOS = "%s"' % config.DESTACADOS)
     f.close()
 
