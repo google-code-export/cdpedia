@@ -19,6 +19,7 @@ import threading
 import posixpath
 import BaseHTTPServer
 from mimetypes import guess_type
+from random import choice
 
 import config
 import to3dirs
@@ -41,6 +42,12 @@ serving_port = None
 
 # función para apagar el servidor
 shutdown = None
+
+# listado de artíuclos destacados para mostrar en la mainpage
+if config.DESTACADOS:
+    destacados = open(config.DESTACADOS, 'r').readlines()
+else:
+    destacados = None
 
 class ContentNotFound(Exception):
     """No se encontró la página requerida!"""
@@ -193,9 +200,38 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
     def _main_page(self, msg=u"¡Bienvenido!"):
-        pag = self.templates("mainpage", mensaje=msg.encode("utf8"),
-                                stt_pag=self._stt_pag, stt_img=self._stt_img)
-        return "text/html", self._wrap(pag, msg.encode("utf8"))
+
+        if destacados:
+            link = choice(destacados).replace('\n','').decode('utf-8')
+            data = self._art_mngr.getArticle(link[len('/wiki/')-1:])
+            while not data:
+                #print u"WARNING: Artículo destacado no encontrado: %s" % link
+                link = choice(destacados).replace('\n','').decode('utf-8')
+                data = self._art_mngr.getArticle(link[len('/wiki/')-1:])
+
+            # La regexp se queda con el título y
+            # los párrafos que hay antes de la TOC (si tiene)
+            # o antes de la 2da sección
+            # Si hay una tabla antes del primer párrafo, la elimina
+            # FIXME: Escribir mejor la regex (por lo menos en varias líneas)
+            #        o tal vez usar BeautifulSoup
+            m = re.search('<h1 id="firstHeading" class="firstHeading">([^<]+).*?<!-- bodytext -->.*?(?:<table .*</table>)?\n(<p>.*?)(?:(?:<table id="toc" class="toc">)|(?:<h2))', data, re.MULTILINE | re.DOTALL)
+            if not m:
+                #print "WARNING: Este articulo rompe la regexp para destacado: %s" % link
+                titulo, primeros_parrafos = '',''
+            else:
+                titulo, primeros_parrafos = m.groups()
+
+            pag = self.templates("mainpage", mensaje=msg.encode("utf8"),
+                                 link=link.encode('utf-8'), titulo=titulo,
+                                 primeros_parrafos=primeros_parrafos,
+                                 stt_pag=self._stt_pag, stt_img=self._stt_img)
+            return "text/html", self._wrap(pag, msg.encode("utf8"))
+
+        else:
+            pag = self.templates("mainpage_sin_destacado", mensaje=msg.encode("utf8"),
+                                 stt_pag=self._stt_pag, stt_img=self._stt_img)
+            return "text/html", self._wrap(pag, msg.encode("utf8"))
 
     def _esperando(self):
         """Se fija si debemos seguir esperando o entregamos la data."""
