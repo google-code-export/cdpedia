@@ -19,7 +19,7 @@
             <br/>
             <h5>Búsquedas:</h5>
               <div id="searchBody" class="pBody">
-                <form method="get" action="/dosearch">
+                <form id="search-form" method="get" action="/dosearch">
                 <input id="searchInput" name="keywords" size="16"/>
                 <input type="submit" value="Buscar" />
                 </form>
@@ -109,7 +109,6 @@
         <!-- fixalpha -->
         <script type="text/javascript"> if ( window.isMSIE55 ) fixalpha(); </script>
         <!-- /fixalpha -->
-<script type="text/javascript">if (window.runOnloadHook) runOnloadHook();</script>
 </body>
 
 
