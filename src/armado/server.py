@@ -18,6 +18,7 @@ import operator
 import threading
 import posixpath
 import BaseHTTPServer
+from base64 import b64encode
 from mimetypes import guess_type
 from random import choice
 
@@ -148,7 +149,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if tipo is not None:
                 self.send_header("Content-type", tipo)
             self.send_header("Content-Length", len(data))
-            if tipo != "text/html":
+            if tipo not in ["text/html", "application/json"]:
                 expiry = self.date_time_string(time.time() + 86400)
                 self.send_header("Expires", expiry)
                 self.send_header("Cache-Control",
@@ -156,7 +157,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
         else:
-            self.send_response (404)
+            self.send_response(404)
             self.end_headers()
             self.wfile.write ("URL not found: %s" % self.path)
 
@@ -198,9 +199,11 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                 orig_link=orig_link.encode("utf8"))
         return header + contenido + footer
 
+    def _404_not_found(self, msg):
+        self.send_response(404)
+        return self._main_page(msg)
 
     def _main_page(self, msg=u"¡Bienvenido!"):
-
         if destacados:
             link = choice(destacados).replace('\n','').decode('utf-8')
             data = self._art_mngr.getArticle(link[len('/wiki/')-1:])
@@ -258,6 +261,12 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return self._esperando()
         if path == "/dosearch":
             return self.dosearch(query)
+        if path == "/ajax/index/ready":
+            return self.ajax_index_ready()
+        if path == "/ajax/buscar":
+            return self.ajax_search(query)
+        if path == "/ajax/buscar/resultado":
+            return self.ajax_search_get_results()
         if path == "/al_azar":
             return self.al_azar(query)
         if path[0] == "/":
@@ -289,6 +298,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 return guess_type(path)[0], asset_data
             else:
                 print "WARNING: no pudimos encontrar", repr(asset_file)
+                self.send_response(404)
                 return "", ""
 
         if path=="":
@@ -297,7 +307,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             data = self._get_contenido(path)
         except ContentNotFound, e:
-            return self._main_page(unicode(e))
+            return self._404_not_found(unicode(e))
 
         return data
 
@@ -316,6 +326,43 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # search in a thread
         buscador.buscar(self.index, keywords.decode("utf8"))
         return self._get_reloading_page(keywords)
+
+    def ajax_index_ready(self):
+        r = 'false'
+        if self.index.is_ready():
+            r = 'true'
+        return "application/json", r
+
+    def ajax_search(self, query):
+        if not self.index.is_ready():
+            self.send_response(500)
+            return "text/html", "Index not ready"
+        params = cgi.parse_qs(query)
+        if not "keywords" in params:
+            return self._main_page(u"¡Búsqueda mal armada!")
+        keywords = params["keywords"][0]
+
+        # search in a thread
+        buscador.buscar(self.index, keywords.decode("utf8"))
+        return "text/html", "buscando?pals=%s" % (urllib.quote(keywords),)
+
+    def ajax_search_get_results(self):
+        res_completa = ""
+        res_detallada = ""
+
+        if not buscador.done_completa or not buscador.done_detallada:
+            status = "NOTDONE"
+        else:
+            status = "DONE"
+        if buscador.done_completa and buscador.results_completa:
+            res_completa = b64encode(self._formatear_resultados(buscador.results_completa))
+        if buscador.done_detallada and buscador.results_detallada:
+            res_detallada = b64encode(self._formatear_resultados(buscador.results_detallada))
+
+        return "application/json", ('{"status":"%s","res_detallada":"%s","res_completa":"%s"}'
+                                                                        % (status,
+                                                                          res_detallada,
+                                                                          res_completa))
 
     def _get_reloading_page(self, palabras, res_comp=None, res_det=None):
         """Arma la página de recarga."""
@@ -400,7 +447,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         cand = sorted(candidatos, key=operator.itemgetter(2), reverse=True)
         for link, titulo, ptje, tokens, texto in cand:
             res.append(u'<font size=+1><a href="%s">%s</a></font><br/>' % (
-                                                                link, titulo))
+                                                                urllib.quote(link.encode("utf-8")), titulo))
             if tokens:
                 res.append(u'<font color="#A05A2C"><i>%s</i></font><br/>' % (
                                                             " ".join(tokens)))

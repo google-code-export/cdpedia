@@ -27,14 +27,18 @@
 
     <script type="text/javascript" src="../../../skins/js/header.js"></script>
     <script type="text/javascript" src="../../../skins/js/wikibits.js"></script>
-    <script type="text/javascript" src="../../../skins/js/jquery.js"></script>
-    <script type="text/javascript" src="../../../skins/js/ajax.js"></script>
-    <script type="text/javascript" src="../../../skins/js/mwsuggest.js"></script>
-    <script type="text/javascript" src="../../../skins/js/Vector.js"></script>
-    <script type="text/javascript" src="../../../skins/js/plugins.js"></script>
+    <script type="text/javascript" src="../../../extern/jquery-1.4.4.min.js"></script>
+    <script type="text/javascript" src="../../../extern/jquery.base64.js"></script>
+    <script type="text/javascript" src="../../../extern/search.js"></script>
+    <!--<script type="text/javascript" src="../../../skins/js/ajax.js"></script>-->
+    <!--<script type="text/javascript" src="../../../skins/js/mwsuggest.js"></script>-->
+    <!--<script type="text/javascript" src="../../../skins/js/Vector.js"></script>
+    <script type="text/javascript" src="../../../skins/js/plugins.js"></script>-->
     <script type="text/javascript" src="../../../skins/js/md5.js"></script>
     <script type="text/javascript" src="../../../skins/js/utf8.js"></script>
     <script type="text/javascript" src="../../../skins/js/lookup.js"></script>
+
+
 
 <style type="text/css">
   a.nopo {border-bottom: 1px dashed red; text-decoration:none; color: red;}
