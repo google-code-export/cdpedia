@@ -53,6 +53,11 @@ else:
 class ContentNotFound(Exception):
     """No se encontró la página requerida!"""
 
+class ArticleNotFound(ContentNotFound):
+    """No se encontró el artículo!"""
+
+class InternalServerError(Exception):
+    """Error interno al buscar contenido!"""
 
 class TemplateManager(object):
     '''Maneja los templates en disco.'''
@@ -143,8 +148,8 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Serve a GET request."""
-        tipo, data = self.getfile(self.path)
-        if data is not None:
+        try:
+            tipo, data = self.getfile(self.path)
             self.send_response(200)
             if tipo is not None:
                 self.send_header("Content-type", tipo)
@@ -156,10 +161,16 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     "max-age=86400, must-revalidate")
             self.end_headers()
             self.wfile.write(data)
-        else:
-            self.send_response(404)
+        except ArticleNotFound, e:
+            self.send_response(code=404)
+            self.send_header("Content-type", "text/html")
+            self.send_header("Content-Length", len(e.args[0]))
             self.end_headers()
-            self.wfile.write ("URL not found: %s" % self.path)
+            self.wfile.write(str(e))
+        except ContentNotFound, e:
+            self.send_error(code=404)
+        except InternalServerError, e:
+            self.send_error(code=500, message=str(e))
 
     def _get_orig_link(self, path):
         """A partir del path devuelve el link original externo."""
@@ -167,7 +178,6 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return orig_link
 
     def _get_contenido(self, path):
-#        print "Get contenido", path
         match = re.match("[^/]+\/[^/]+\/[^/]+\/(.*)", path)
         if match is not None:
             path = match.group(1)
@@ -176,11 +186,11 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             data = self._art_mngr.getArticle(path)
         except Exception, e:
             msg = u"Error interno al buscar contenido: %s" % e
-            raise ContentNotFound(msg)
+            raise InternalServerError(msg)
 
         if data is None:
-            m  = NOTFOUND % (path, orig_link)
-            raise ContentNotFound(m)
+            msg  = NOTFOUND % (path, orig_link)
+            raise ArticleNotFound(msg)
 
         title = getTitleFromData(data)
         return "text/html", self._wrap(data, title, orig_link=orig_link)
@@ -199,15 +209,13 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                 orig_link=orig_link.encode("utf8"))
         return header + contenido + footer
 
-    def _404_not_found(self, msg):
-        self.send_response(404)
-        return self._main_page(msg)
-
     def _main_page(self, msg=u"¡Bienvenido!"):
         if destacados:
             link = choice(destacados).replace('\n','').decode('utf-8')
             data = self._art_mngr.getArticle(link[len('/wiki/')-1:])
             while not data:
+                # FIXME: si no está ningún artículo de los destacados se queda
+                # trabado aca.
                 #print u"WARNING: Artículo destacado no encontrado: %s" % link
                 link = choice(destacados).replace('\n','').decode('utf-8')
                 data = self._art_mngr.getArticle(link[len('/wiki/')-1:])
@@ -278,7 +286,8 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # sacamos y tenemos el path que nos sirve
         if arranque == "wiki":
             articulo = path[len("wiki/"):].decode("utf-8")
-            path = to3dirs.to_complete_path(articulo)
+            if articulo:
+                path = to3dirs.to_complete_path(articulo)
 
         # a todo lo que está afuera de los artículos, en assets, lo tratamos
         # diferente
@@ -286,7 +295,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             asset_file = os.path.join(config.DIR_ASSETS, path)
             if os.path.isdir(asset_file):
                 print "WARNING: ", repr(asset_file), "es un directorio"
-                return "", None
+                raise ContentNotFound()
             if os.path.exists(asset_file):
                 asset_data = open(asset_file, "rb").read()
 
@@ -298,16 +307,18 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 return guess_type(path)[0], asset_data
             else:
                 print "WARNING: no pudimos encontrar", repr(asset_file)
-                self.send_response(404)
-                return "", ""
+                raise ContentNotFound()
 
         if path=="":
             return self._main_page()
 
         try:
             data = self._get_contenido(path)
-        except ContentNotFound, e:
-            return self._404_not_found(unicode(e))
+        except ArticleNotFound, e:
+            # Devolvemos el error del artículo no encontrado usando la página
+            # principal.
+            _, msg = self._main_page(unicode(e))
+            raise ArticleNotFound(msg)
 
         return data
 
@@ -335,8 +346,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def ajax_search(self, query):
         if not self.index.is_ready():
-            self.send_response(500)
-            return "text/html", "Index not ready"
+            raise InternalServerError("Index not ready")
         params = cgi.parse_qs(query)
         if not "keywords" in params:
             return self._main_page(u"¡Búsqueda mal armada!")
