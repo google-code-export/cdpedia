@@ -37,6 +37,8 @@ RELOAD_HEADER = '<meta http-equiv="refresh" content="2;'\
 BUSQ_NO_RESULTS = u"No se encontró nada para lo ingresado!"
 LIMPIA = re.compile("[(),]")
 
+WATCHDOG_IFRAME = '<iframe src="/watchdog/update" style="width:1px;height:1px;'\
+                  'display:none;"></iframe>'
 
 # variable global para saber el puerto usado por el servidor
 serving_port = None
@@ -196,7 +198,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return "text/html", self._wrap(data, title, orig_link=orig_link)
 
     def _wrap(self, contenido, title, orig_link=None):
-        header = self.templates("header", titulo=title)
+        header = self.templates("header", titulo=title, iframe=WATCHDOG_IFRAME)
 
         if orig_link is None:
             orig_link = ""
@@ -275,6 +277,8 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return self.ajax_search(query)
         if path == "/ajax/buscar/resultado":
             return self.ajax_search_get_results()
+        if path == "/watchdog/update":
+            return self.watchdog_update()
         if path == "/al_azar":
             return self.al_azar(query)
         if path[0] == "/":
@@ -304,7 +308,12 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if "tutorial/_sources" in asset_file:
                     return "text/plain ;charset=utf-8", asset_data
 
-                return guess_type(path)[0], asset_data
+                type_ = guess_type(path)[0]
+                if type_ == "text/html":
+                    s = re.search("<.*?body.*?>", asset_data)
+                    if s:
+                        asset_data = asset_data.replace(s.group(), s.group()+WATCHDOG_IFRAME)
+                return type_, asset_data
             else:
                 print "WARNING: no pudimos encontrar", repr(asset_file)
                 raise ContentNotFound()
@@ -373,6 +382,11 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                                                         % (status,
                                                                           res_detallada,
                                                                           res_completa))
+    def watchdog_update(self):
+        self._watchdog_update()
+        seconds = str(config.BROWSER_WD_SECONDS/2)
+        return "text/html", "<html><head><meta http-equiv='refresh' content='%s'" \
+                             "></head><body></body></html>" % (seconds, )
 
     def _get_reloading_page(self, palabras, res_comp=None, res_det=None):
         """Arma la página de recarga."""
@@ -456,7 +470,7 @@ class WikiHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         candidatos = ((k,) + tuple(v) for k,v in agrupados.iteritems())
         cand = sorted(candidatos, key=operator.itemgetter(2), reverse=True)
         for link, titulo, ptje, tokens, texto in cand:
-            res.append(u'<font size=+1><a href="%s">%s</a></font><br/>' % (
+            res.append(u'<font size=+1><a href="/%s">%s</a></font><br/>' % (
                                                                 urllib.quote(link.encode("utf-8")), titulo))
             if tokens:
                 res.append(u'<font color="#A05A2C"><i>%s</i></font><br/>' % (
@@ -517,8 +531,7 @@ class Buscador(object):
 
 buscador = Buscador()
 
-
-def run(event):
+def run(server_up_event, watchdog_update):
     global serving_port
     global shutdown
 
@@ -540,7 +553,8 @@ def run(event):
     print "Sirviendo HTTP en localhost, puerto %d..." % port
 
     shutdown = httpd.shutdown
-    event.set()
+    server_up_event.set()
+    WikiHTTPRequestHandler._watchdog_update = watchdog_update
     httpd.serve_forever()
 
 if __name__ == '__main__':

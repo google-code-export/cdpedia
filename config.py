@@ -54,6 +54,9 @@ INDEX = "educar/index.html"
 # Si no hay destacados debe ser None
 DESTACADOS = './destacados.txt'
 
+# Tiempo de espera máxima para actualización del browser_watchdog
+BROWSER_WD_SECONDS = 60
+
 # Comando externo para convertir en HTML en texto, para extraer las palabras
 # del documento. Lynx es el default, pero requiere que esté instalado en el host.
 # W3m está disponible en todos los Ubuntus. %s se expande al path al archivo
