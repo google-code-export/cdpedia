@@ -21,22 +21,31 @@ from werkzeug.routing import Map, Rule
 from werkzeug.exceptions import HTTPException, NotFound, InternalServerError
 from werkzeug.wsgi import SharedDataMiddleware
 from werkzeug.utils import redirect
+from jinja2 import Environment, FileSystemLoader
 
 WATCHDOG_IFRAME = '<iframe src="/watchdog/update" style="width:1px;height:1px;'\
                   'display:none;"></iframe>'
-NOTFOUND = u"""
-El artículo '%s' no pudo ser incluido en el disco <br/><br>
-Podés acceder al mismo en Wikipedia en
-<a class="external" href="%s">este enlace</a> externo.
-"""
+
 ALL_ASSETS = config.ASSETS + ["images",  "extern", "tutorial"]
 if config.EDICION_ESPECIAL is not None:
     ALL_ASSETS.append(config.EDICION_ESPECIAL)
+
+
+class ArticleNotFound(HTTPException):
+    code = 404
+
+    def __init__(self, article_name, original_link, description=None):
+        HTTPException.__init__(self, description)
+        self.article_name = article_name
+        self.original_link = original_link
+
 
 class CDPedia(object):
 
     def __init__(self, conf=None):
         template_path = os.path.join(os.path.dirname(__file__), 'templates')
+        self.jinja_env = Environment(loader=FileSystemLoader(template_path),
+                                 autoescape=False)
         self.template_manager = TemplateManager(template_path)
         self._art_mngr = compresor.ArticleManager()
         self._img_mngr = compresor.ImageManager()
@@ -58,8 +67,8 @@ class CDPedia(object):
             normpath = posixpath.normpath(nombre)
             asset_data = self._img_mngr.get_item(normpath)
         except Exception, e:
-            msg = u"Error interno al buscar contenido: %s" % e
-            return InternalServerError(msg)
+            msg = u"Error interno al buscar imagen: %s" % e
+            raise InternalServerError(msg)
         if asset_data is None:
             print "WARNING: no pudimos encontrar", repr(nombre)
             try:
@@ -67,7 +76,7 @@ class CDPedia(object):
                 width = int(width)
                 height = int(height)
             except Exception, e:
-                return InternalServerError("Error al generar imagen")
+                raise InternalServerError("Error al generar imagen")
             img = bmp.BogusBitMap(width, height)
             return Response(img.data, mimetype="img/bmp")
         type_ = guess_type(nombre)[0]
@@ -75,68 +84,59 @@ class CDPedia(object):
 
 
     def on_main_page(self, request):
-        msg = u"CDPedia v" + config.VERSION
-        portales = self.render_template("portales")
         data_destacado = self._destacados_mngr.get_destacado()
+        destacado = None
         if data_destacado is not None:
-            link, titulo, primeros_parrafos = data_destacado
-            pag = self.render_template("mainpage", mensaje=msg, link=link,
-                                       titulo=titulo,
-                                       primeros_parrafos=primeros_parrafos,
-                                       portales=portales)
-        else:
-            pag = self.render_template("mainpage_sin_destacado", mensaje=msg,
-                                       portales=portales)
-        r = self._wrap_content(pag, title="Portada")
-        return Response(r, mimetype='text/html')
+            link, title, first_paragraphs = data_destacado
+            destacado = {"link":link, "title":title,
+                         "first_paragraphs":first_paragraphs.decode("utf-8")}
+        return self.render_template('main_page.html',
+            title="Portada",
+            destacado=destacado,
+        )
 
     def on_articulo(self, request, nombre):
         orig_link = utils.get_orig_link(nombre)
         try:
             data = self._art_mngr.get_item(nombre)
         except Exception, e:
-            return InternalServerError(u"Error interno al buscar contenido: %s" % e)
+            raise InternalServerError(u"Error interno al buscar contenido: %s" % e)
 
         if data is None:
-            return NotFound(NOTFOUND % (nombre, orig_link))
+            raise ArticleNotFound(nombre, orig_link)
 
         title = utils.get_title_from_data(data)
-        r = self._wrap_content(data, title, orig_link=orig_link)
-        return Response(r, mimetype='text/html')
+        return self.render_template('article.html',
+            article_name=nombre,
+            orig_link=orig_link,
+            article=data.decode("utf-8")
+        )
 
-    #@ei.espera_indice
+    #@ei.espera_indice # TODO
     def on_al_azar(self, request):
         link, tit = self.index.get_random()
         link = u"wiki/" + to3dirs.from_path(link)
         return redirect(urllib.quote(link.encode("utf-8")))
 
-    def _wrap_content(self, contenido, title, orig_link=None):
-        header = self.render_template("header", titulo=title, iframe=WATCHDOG_IFRAME)
-
-        if orig_link is None:
-            orig_link = ""
-        else:
-            orig_link = u'Si tenés conexión a Internet, podés visitar la '\
-                        u'<a class="external" href="%s">página original y '\
-                        u'actualizada</a> de éste artículo.'  % orig_link
-
-        footer = self.render_template("footer", orig_link=orig_link)
-        return header + contenido + footer
-
     def render_template(self, template_name, **context):
-        t = self.template_manager.get_template(template_name)
-        for key in context.iterkeys():
-            data = context[key]
-            if isinstance(data, unicode):
-                context[key] = data.encode("utf-8")
-        r = t.substitute(**context)
-        return r
+        t = self.jinja_env.get_template(template_name)
+        return Response(t.render(context), mimetype='text/html')
 
     def dispatch_request(self, request):
         adapter = self.url_map.bind_to_environ(request.environ)
         try:
             endpoint, values = adapter.match()
             return getattr(self, 'on_' + endpoint)(request, **values)
+        except ArticleNotFound, e:
+            response =  self.render_template("404.html",
+                                             article_name=e.article_name,
+                                             original_link=e.original_link)
+            response.status_code = 404
+            return response
+        except InternalServerError, e:
+            response = self.render_template("500.html", message=e.description)
+            response.status_code = 500
+            return response
         except HTTPException, e:
             return e
 
