@@ -15,7 +15,7 @@ from src.armado import cdpindex
 from src.armado import to3dirs
 from destacados import Destacados
 from utils import TemplateManager
-from src import third_party # Need this to import werkzeug
+from src import third_party # Need this to import thirdparty (werkzeug and jinja2)
 from werkzeug.wrappers import Request, Response
 from werkzeug.routing import Map, Rule
 from werkzeug.exceptions import HTTPException, NotFound, InternalServerError
@@ -159,4 +159,5 @@ def create_app(with_static=True):
 if __name__ == '__main__':
     from werkzeug.serving import run_simple
     app = create_app()
-    run_simple('127.0.0.1', 8000, app, use_debugger=True, use_reloader=False)
+    run_simple('127.0.0.1', 8000, app, use_debugger=True, use_reloader=False,
+               threaded=True)
