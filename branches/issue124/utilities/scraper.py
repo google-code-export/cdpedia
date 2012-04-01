@@ -215,6 +215,9 @@ class WikipediaPage(WikipediaWebBase):
         self.url, temp_file, disk_name, uralizer, self.basename = datos
         self._history = None
 
+    def __str__(self):
+        return '<wp: %s>'%self.basename
+
     @property
     def history_url(self):
         return self.URL_ENC( self.HISTORY_BASE % self.QUOTE(self.basename) )
@@ -255,13 +258,15 @@ class WikipediaPage(WikipediaWebBase):
         self.acceptance_delta = datetime.timedelta(acceptance_days)
         prev_date = datetime.datetime.now()
         
-        for hi in self.iter_history():
+        for idx, hi in enumerate(self.iter_history()):
             if self.validate_revision(hi, prev_date):
                 break #return hi.page_rev_id
             prev_date = hi.date
         else:
-            raise Exception('No version for: %s'%str(page))
-
+            raise Exception('No version for: %s'%str(self))
+        
+        if idx!=0 and 1:
+            print 'warning: possible vandalism:', str(self), idx
         return self.get_revision_url(hi.page_rev_id)
 
     def validate_revision(self, hist_item, prev_date):
