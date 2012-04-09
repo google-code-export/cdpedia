@@ -196,6 +196,8 @@ class WikipediaUser(WikipediaWebBase):
         preurl = 'http://es.wikipedia.org/w/index.php?title=Especial:ListaUsuarios&group=bot&limit=1&username=%s'
         return self.URL_ENC( preurl % self.QUOTE(self.userid) )
 
+class NoVersionException(Exception):
+    pass #'No version for: %s'%str(self))
 
 class WikipediaPage(WikipediaWebBase):
     """
@@ -216,7 +218,7 @@ class WikipediaPage(WikipediaWebBase):
         self._history = None
 
     def __str__(self):
-        return '<wp: %s>'%self.basename
+        return '<wp: '+self.basename.encode('utf-8')+'>'
 
     @property
     def history_url(self):
@@ -263,10 +265,11 @@ class WikipediaPage(WikipediaWebBase):
                 break #return hi.page_rev_id
             prev_date = hi.date
         else:
-            raise Exception('No version for: %s'%str(self))
+            raise NoVersionException(str(self))
         
         if idx!=0 and 1:
-            print 'warning: possible vandalism:', str(self), idx
+            print 'warning: possible vandalism:', self, idx
+
         return self.get_revision_url(hi.page_rev_id)
 
     def validate_revision(self, hist_item, prev_date):
@@ -354,8 +357,14 @@ def extract_content(html):
 
 def fetch(datos):
     page = WikipediaPageES(datos)
-    version_url = page.search_valid_version()
     url, temp_file, disk_name, uralizer, basename = datos
+
+    try:
+        version_url = page.search_valid_version()
+    except NoVersionException, e:
+        print repr(e)
+        return NO_EXISTE, basename
+
     url = version_url
 
     try:
